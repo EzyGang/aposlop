@@ -138,7 +138,9 @@ Required coverage:
 
 Tests must be deterministic, isolated, and full-suite-safe. Use fixed MinHash seeds and controlled metadata in cache tests. Do not depend on checkout contents, network services, wall-clock timing, or thread order.
 
-Keep test bodies out of production modules. Use a sibling `*_tests.rs` for a focused suite or one `<domain>/tests/` module for several files; never both.
+- Put every Rust test body and test fixture under `src/tests/`
+- Register focused suites through `src/tests/mod.rs` and one `#[cfg(test)] mod tests;` declaration in `src/main.rs`
+- Do not add inline test bodies, sibling `*_tests.rs` files, or another Rust test directory
 
 ## Validation
 

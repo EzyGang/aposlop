@@ -1,0 +1,73 @@
+[project]
+site_name = "Aposlop Documentation"
+site_description = "Installation, usage, configuration, language, output, and analysis documentation for Aposlop."
+docs_dir = "content"
+site_dir = "site"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = [
+    { "Overview" = "getting-started/index.md" },
+    { "Installation" = "getting-started/installation.md" },
+    { "Quick start" = "getting-started/quickstart.md" },
+  ] },
+  { "Using Aposlop" = [
+    { "Configuration" = "configuration/index.md" },
+    { "Configuration precedence" = "configuration/precedence.md" },
+    { "Exclusions" = "configuration/exclusions.md" },
+    { "Duplicate results" = "concepts/duplicate-types.md" },
+    { "Complexity results" = "concepts/complexity.md" },
+    { "Cache" = "operations/cache.md" },
+    { "Output formats" = "operations/output.md" },
+    { "Diagnostics" = "operations/diagnostics.md" },
+  ] },
+  { "Languages" = [
+    { "Overview" = "languages/index.md" },
+    { "Rust" = "languages/rust.md" },
+    { "Python" = "languages/python.md" },
+    { "TypeScript and TSX" = "languages/typescript.md" },
+  ] },
+  { "Reference" = [
+    { "CLI" = "reference/cli.md" },
+    { "Configuration" = "reference/configuration.md" },
+    { "JSON report" = "reference/json-report.md" },
+    { "Exit codes" = "reference/exit-codes.md" },
+  ] },
+  { "Under the hood" = "concepts/how-it-works.md" },
+]
+
+[project.theme]
+variant = "modern"
+logo = "/logo.svg"
+favicon = "/logo.svg"
+features = [
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.instant.progress",
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.sections",
+  "navigation.path",
+  "navigation.tracking",
+  "navigation.top",
+  "toc.follow",
+  "search.highlight",
+  "content.code.copy",
+  "content.code.select",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "deep-purple"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "deep-purple"
+accent = "amber"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"

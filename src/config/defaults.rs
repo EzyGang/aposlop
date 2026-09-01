@@ -1,0 +1,37 @@
+use std::path::PathBuf;
+
+use super::{CoreConfig, DuplicateConfig, MetricsConfig};
+
+impl Default for CoreConfig {
+    fn default() -> Self {
+        Self {
+            min_lines: 5,
+            min_nodes: 30,
+            exclude: ["tests", "vendor", "node_modules", "target"]
+                .into_iter()
+                .map(PathBuf::from)
+                .collect(),
+            use_cache: true,
+        }
+    }
+}
+
+impl Default for DuplicateConfig {
+    fn default() -> Self {
+        Self {
+            type_1: true,
+            type_2: true,
+            type_3: true,
+            type_3_threshold: 0.85,
+        }
+    }
+}
+
+impl Default for MetricsConfig {
+    fn default() -> Self {
+        Self {
+            calculate_complexity: true,
+            complexity_threshold: 15,
+        }
+    }
+}
