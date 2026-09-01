@@ -8,3 +8,4 @@ mod language;
 mod language_features;
 mod main;
 mod report;
+mod update;

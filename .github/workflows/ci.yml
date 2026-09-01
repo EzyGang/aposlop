@@ -81,6 +81,22 @@ jobs:
           restore-keys: cargo-package-
       - name: Validate Cargo package
         run: cargo package --locked
+      - name: Validate POSIX installer syntax
+        run: bash -n scripts/install.sh
+      - name: Validate PowerShell installer syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [Management.Automation.Language.Parser]::ParseFile(
+            "scripts/install.ps1",
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_ }
+            exit 1
+          }
       - name: Build Python source distribution
         uses: PyO3/maturin-action@v1
         with:

@@ -1,6 +1,12 @@
 # Aposlop
 
 <p align="center">
+<a href="docs/content/index.md">
+    <img src="docs/content/images/icon.png" width="320" alt="Aposlop">
+</a>
+</p>
+
+<p align="center">
 <a href="https://github.com/EzyGang/aposlop/actions/workflows/ci.yml">
     <img src="https://github.com/EzyGang/aposlop/actions/workflows/ci.yml/badge.svg" alt="CI status">
 </a>
@@ -76,10 +82,33 @@ These controls let a project accept known findings and continue development.
 | JSON output | Provides stable data for other tools |
 | CI command | Returns failure when findings remain |
 | Local cache | Reuses analysis for unchanged files |
+| Update check | Warns interactive users when a new release is available |
 
 ---
 
 ## Installation
+
+### Install script on Linux or macOS
+
+Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/).
+Then run the installer:
+
+```bash
+curl -fsSLo install.sh https://github.com/EzyGang/aposlop/releases/latest/download/install.sh
+sh install.sh
+```
+
+### Install script on Windows
+
+Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/).
+Then run the installer:
+
+```powershell
+Invoke-WebRequest https://github.com/EzyGang/aposlop/releases/latest/download/install.ps1 -OutFile install.ps1
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+Both scripts verify the archive checksum and Sigstore signatures.
 
 ### Cargo
 
@@ -127,6 +156,19 @@ Verify the installation:
 ```bash
 aposlop --version
 aposlop --help
+```
+
+### Update checks
+
+Aposlop checks for a new GitHub release during interactive runs.
+It performs a network request at most once every 24 hours.
+It stores the latest result in the user cache directory.
+Non-interactive commands do not perform this check.
+
+Set this environment variable to disable the check:
+
+```bash
+APOSLOP_NO_UPDATE_CHECK=1 aposlop .
 ```
 
 ---

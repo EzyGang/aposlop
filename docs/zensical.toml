@@ -38,8 +38,8 @@ nav = [
 
 [project.theme]
 variant = "modern"
-logo = "/logo.svg"
-favicon = "/logo.svg"
+logo = "images/icon.png"
+favicon = "images/icon.png"
 features = [
   "navigation.instant",
   "navigation.instant.prefetch",

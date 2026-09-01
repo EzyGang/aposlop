@@ -78,9 +78,14 @@ jobs:
             asset_arch: arm64
             archive: zip
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4
       - name: Cache Cargo data
         uses: actions/cache@v6
         with:
@@ -95,6 +100,21 @@ jobs:
         run: rustup target add ${{ matrix.target }}
       - name: Build release binary
         run: cargo build --locked --release --target ${{ matrix.target }}
+      - name: Sign Unix release binary
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          binary="target/${{ matrix.target }}/release/aposlop"
+          cosign sign-blob "$binary" --yes --bundle "$binary.sigstore.json"
+      - name: Sign Windows release binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $binary = "target/${{ matrix.target }}/release/aposlop.exe"
+          & cosign sign-blob $binary --yes --bundle "$binary.sigstore.json"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
       - name: Package Unix release archive
         if: runner.os != 'Windows'
         shell: bash
@@ -103,7 +123,8 @@ jobs:
         run: |
           mkdir -p package dist
           cp "target/${{ matrix.target }}/release/aposlop" package/aposlop
-          tar -C package -czf "dist/aposlop-${VERSION}-${{ matrix.asset_os }}-${{ matrix.asset_arch }}.tar.gz" aposlop
+          cp "target/${{ matrix.target }}/release/aposlop.sigstore.json" package/aposlop.sigstore.json
+          tar -C package -czf "dist/aposlop-${VERSION}-${{ matrix.asset_os }}-${{ matrix.asset_arch }}.tar.gz" aposlop aposlop.sigstore.json
       - name: Package Windows release archive
         if: runner.os == 'Windows'
         shell: pwsh
@@ -112,7 +133,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force package, dist | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/aposlop.exe" "package/aposlop.exe"
-          Compress-Archive -Path "package/aposlop.exe" -DestinationPath "dist/aposlop-$env:VERSION-${{ matrix.asset_os }}-${{ matrix.asset_arch }}.zip"
+          Copy-Item "target/${{ matrix.target }}/release/aposlop.exe.sigstore.json" "package/aposlop.sigstore.json"
+          Compress-Archive -Path "package/*" -DestinationPath "dist/aposlop-$env:VERSION-${{ matrix.asset_os }}-${{ matrix.asset_arch }}.zip"
       - name: Upload release archive
         uses: actions/upload-artifact@v7
         with:
@@ -138,7 +160,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4
       - name: Download release archives
         uses: actions/download-artifact@v8
         with:
@@ -151,8 +178,19 @@ jobs:
           pattern: wheel-*
           path: dist
           merge-multiple: true
+      - name: Add installation scripts
+        run: |
+          cp scripts/install.sh dist/install.sh
+          cp scripts/install.ps1 dist/install.ps1
       - name: Generate checksums
-        run: sha256sum dist/* > dist/SHA256SUMS
+        working-directory: dist
+        run: sha256sum aposlop-* install.sh install.ps1 > SHA256SUMS
+      - name: Sign release artifacts
+        working-directory: dist
+        run: |
+          for artifact in *; do
+            cosign sign-blob "$artifact" --yes --bundle "$artifact.sigstore.json"
+          done
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}

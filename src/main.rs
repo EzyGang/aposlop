@@ -7,6 +7,7 @@ mod ingest;
 mod language;
 mod report;
 mod report_terminal;
+mod update;
 
 #[cfg(test)]
 mod tests;
@@ -148,14 +149,33 @@ impl Cli {
 
 fn main() -> ExitCode {
     let stdout = io::stdout();
-    let color = stdout.is_terminal() && std::env::var_os("NO_COLOR").is_none();
+    let interactive = stdout.is_terminal();
+    let color = interactive && std::env::var_os("NO_COLOR").is_none();
     let mut stdout = stdout.lock();
     match run_with_color(Cli::parse(), &mut stdout, color) {
-        Ok(status) => status.exit_code(),
+        Ok(status) => {
+            if interactive && std::env::var_os("APOSLOP_NO_UPDATE_CHECK").is_none() {
+                warn_if_update_available();
+            }
+            status.exit_code()
+        }
         Err(error) => {
             eprintln!("error: {error:#}");
             ExitCode::FAILURE
         }
+    }
+}
+
+fn warn_if_update_available() {
+    match update::check() {
+        Ok(Some(available)) => {
+            eprintln!(
+                "warning: aposlop {} is available; update at {}",
+                available.version, available.url
+            );
+        }
+        Ok(None) => (),
+        Err(error) => eprintln!("warning: update check failed: {error}"),
     }
 }
 
