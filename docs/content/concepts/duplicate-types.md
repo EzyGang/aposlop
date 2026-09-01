@@ -22,9 +22,8 @@ Operator and control-flow changes alter the normalized stream.
 
 Type-3 blocks have different normalized streams and verified Jaccard similarity at or above the effective threshold.
 
-Aposlop builds five-token shingles, fixed MinHash signatures, and LSH buckets.
-LSH only generates candidates.
-A two-pointer Jaccard comparison verifies every reported candidate.
+Aposlop builds five-token shingles and runs an exact prefix-filtered similarity join.
+A two-pointer Jaccard comparison verifies every surviving Type-3 candidate.
 
 ## Precedence
 

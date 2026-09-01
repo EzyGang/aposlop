@@ -68,7 +68,10 @@ fn providers_extract_blocks_and_count_complexity_decisions() -> TestResult {
         assert!(analyzed.line_count > 0, "{path}");
         assert!(analyzed.complexity >= 2, "{path}");
         assert!(!analyzed.shingles.is_empty(), "{path}");
-        assert_ne!(analyzed.signature, [u64::MAX; 100], "{path}");
+        assert!(
+            analyzed.shingles.windows(2).all(|pair| pair[0] < pair[1]),
+            "{path}"
+        );
     }
     assert_eq!(block(&files, "logic.rs")?.complexity, 4);
     assert_eq!(block(&files, "logic.py")?.complexity, 3);

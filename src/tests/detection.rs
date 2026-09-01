@@ -6,7 +6,7 @@ use xxhash_rust::xxh3::xxh3_64;
 
 use crate::analysis::{AnalyzedBlock, AnalyzedFile, SourceLocation, analyze};
 use crate::config::Config;
-use crate::detection::near_miss::{build_signature, jaccard};
+use crate::detection::shingles::{build_shingles, jaccard};
 use crate::detection::{CloneKind, detect};
 use crate::ingest::{FileIdentity, discover};
 use crate::language::{LanguageId, LanguageRegistry};
@@ -68,7 +68,7 @@ fn hash_collisions_require_byte_equality() -> TestResult {
 }
 
 #[test]
-fn lsh_candidates_are_verified_at_the_jaccard_boundary() -> TestResult {
+fn exact_candidates_are_verified_at_the_jaccard_boundary() -> TestResult {
     let left = manual_file("left.ts", &[1, 2, 3, 4], 1);
     let right = manual_file("right.ts", &[1, 2, 3, 5], 2);
 
@@ -77,6 +77,17 @@ fn lsh_candidates_are_verified_at_the_jaccard_boundary() -> TestResult {
     assert_eq!(included[0].kind, CloneKind::Type3);
     assert_eq!(included[0].similarity, 0.60);
     assert!(detect(&[left, right], &permissive_config(0.61)?).is_empty());
+    Ok(())
+}
+
+#[test]
+fn zero_threshold_includes_disjoint_shingle_sets() -> TestResult {
+    let left = manual_file("left.ts", &[1, 2], 1);
+    let right = manual_file("right.ts", &[8, 9], 2);
+
+    let matches = detect(&[left, right], &permissive_config(0.0)?);
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].similarity, 0.0);
     Ok(())
 }
 
@@ -92,11 +103,17 @@ fn insufficient_similarity_and_extension_thresholds_are_excluded() -> TestResult
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = 0.5\n[extensions.tsx]\ntype_3_threshold = 0.7",
     )?;
     assert!(detect(&[ts, tsx], &config).is_empty());
+    let ts = manual_file("included.ts", &[1, 2, 3, 4], 5);
+    let tsx = manual_file("included.tsx", &[1, 2, 3, 5], 6);
+    let config = Config::parse(
+        "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = 0.5\n[extensions.tsx]\ntype_3_threshold = 0.6",
+    )?;
+    assert_eq!(detect(&[ts, tsx], &config).len(), 1);
     Ok(())
 }
 
 #[test]
-fn repeated_bands_and_shuffled_input_produce_one_stable_result() -> TestResult {
+fn duplicate_prefix_hits_and_shuffled_input_produce_one_stable_result() -> TestResult {
     let left = manual_file("left.ts", &[1, 2, 3, 4], 1);
     let right = manual_file("right.ts", &[1, 2, 3, 5], 2);
     let config = permissive_config(0.6)?;
@@ -129,17 +146,128 @@ fn same_file_blocks_match_without_self_pairs() -> TestResult {
 }
 
 #[test]
-fn minhash_seeds_and_jaccard_are_repeatable() -> TestResult {
-    let shingles = [2, 3, 5, 7, 11];
-    assert_eq!(build_signature(&shingles), build_signature(&shingles));
+fn shingles_and_jaccard_are_repeatable() -> TestResult {
+    let tokens = [2, 3, 5, 7, 11, 13];
+    assert_eq!(build_shingles(&tokens), build_shingles(&tokens));
     assert_eq!(jaccard(&[1, 2, 3], &[2, 3, 4]), 0.5);
     Ok(())
+}
+
+#[test]
+fn exact_join_recovers_the_formerly_missed_operator_change() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join("operators.py"),
+        concat!(
+            "def find_max_price(prices):\n",
+            "    most_expensive = 0\n",
+            "    for price in prices:\n",
+            "        if price > most_expensive:\n",
+            "            most_expensive = price\n",
+            "    return most_expensive\n",
+            "\n",
+            "def find_min_age(ages):\n",
+            "    youngest = 999\n",
+            "    for age in ages:\n",
+            "        if age < youngest:\n",
+            "            youngest = age\n",
+            "    return youngest\n",
+        ),
+    )?;
+    let config = permissive_config(0.55)?;
+    let registry = LanguageRegistry::compile()?;
+    let discovery = discover(fixture.path(), &config, &registry)?;
+    let files = analyze(discovery.files, &registry)?;
+    let exact = detect(&files, &config);
+
+    assert_eq!(exact.len(), 1);
+    assert_eq!(exact[0].kind, CloneKind::Type3);
+    assert!(exact[0].similarity >= 0.55);
+    Ok(())
+}
+
+#[test]
+fn exact_join_matches_brute_force_at_supported_thresholds() -> TestResult {
+    let files = oracle_files(240, 64);
+
+    for threshold in [0.55, 0.70, 0.85, 0.90] {
+        let exact = detect(&files, &permissive_config(threshold)?);
+        let oracle_matches = brute_force_match_count(&files, threshold);
+        assert_eq!(exact.len(), oracle_matches, "threshold {threshold}");
+    }
+
+    Ok(())
+}
+
+fn oracle_files(block_count: usize, shingle_count: usize) -> Vec<AnalyzedFile> {
+    let mut blocks = Vec::with_capacity(block_count);
+
+    for index in 0..block_count {
+        let group = index / 20;
+        let variant = index % 20;
+        let mut shingles: Vec<_> = (0..shingle_count)
+            .map(|token| (group * 10_000 + token) as u64)
+            .collect();
+        for mutation in 0..variant.min(shingle_count / 3) {
+            shingles[shingle_count - mutation - 1] =
+                1_000_000_000 + (index * shingle_count + mutation) as u64;
+        }
+        shingles.sort_unstable();
+
+        let exact = index.to_le_bytes().to_vec();
+        let mut normalized = b"normalized".to_vec();
+        normalized.extend_from_slice(&index.to_le_bytes());
+        blocks.push(AnalyzedBlock {
+            location: SourceLocation {
+                path: PathBuf::from("benchmark.ts"),
+                start_line: index * 10 + 1,
+                end_line: index * 10 + 5,
+            },
+            start_byte: index * 100,
+            end_byte: index * 100 + 99,
+            line_count: 5,
+            named_node_count: 100,
+            exact_hash: xxh3_64(&exact),
+            normalized_hash: xxh3_64(&normalized),
+            exact,
+            normalized,
+            shingles,
+            complexity: 1,
+        });
+    }
+
+    vec![AnalyzedFile {
+        identity: FileIdentity {
+            path: PathBuf::from("benchmark.ts"),
+            size: 1,
+            modified_seconds: 0,
+            modified_nanoseconds: 0,
+            language: LanguageId::TypeScript,
+        },
+        blocks,
+        diagnostics: Vec::new(),
+    }]
 }
 
 fn permissive_config(threshold: f64) -> TestResult<Config> {
     Ok(Config::parse(&format!(
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = {threshold}"
     ))?)
+}
+
+fn brute_force_match_count(files: &[AnalyzedFile], threshold: f64) -> usize {
+    let blocks = &files[0].blocks;
+    let mut count = 0;
+
+    for left in 0..blocks.len() {
+        for right in left + 1..blocks.len() {
+            if jaccard(&blocks[left].shingles, &blocks[right].shingles) >= threshold {
+                count += 1;
+            }
+        }
+    }
+
+    count
 }
 
 fn manual_file(path: &str, shingles: &[u64], discriminator: u8) -> AnalyzedFile {
@@ -167,9 +295,7 @@ fn manual_file(path: &str, shingles: &[u64], discriminator: u8) -> AnalyzedFile 
             normalized_hash: xxh3_64(&normalized),
             exact,
             normalized,
-            token_hashes: Vec::new(),
             shingles: shingles.to_vec(),
-            signature: vec![7; 100],
             complexity: 1,
         }],
         diagnostics: Vec::new(),

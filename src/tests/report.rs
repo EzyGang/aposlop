@@ -133,9 +133,7 @@ fn analyzed_file(path: &str, scores: &[usize]) -> AnalyzedFile {
                 normalized: vec![index as u8],
                 exact_hash: index as u64,
                 normalized_hash: index as u64,
-                token_hashes: Vec::new(),
                 shingles: vec![index as u64],
-                signature: vec![index as u64; 100],
                 complexity: *score,
             })
             .collect(),

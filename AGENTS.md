@@ -41,7 +41,7 @@ Done means behavior, callers, tests, configuration, help text, and user document
 - Cache: identity, serialization, compatibility, reads, atomic writes
 - Language providers: extensions, grammars, block extraction, normalization queries, complexity queries
 - Exact-clone detection: normalized equality, fast-hash candidate groups
-- Near-miss detection: shingles, MinHash signatures, LSH buckets, Jaccard verification
+- Near-miss detection: shingles, exact prefix-filtered similarity joins, positional pruning, and Jaccard verification
 - Reporting: stable result models, terminal rendering, JSON rendering
 
 Analysis code must not print. Filesystem, Tree-sitter, hashing, serialization, and terminal-formatting details stop at their owning boundaries. Domain APIs use typed contracts, not untyped maps or JSON values.
@@ -54,10 +54,10 @@ Performance changes require correctness checks and evidence from representative 
 
 - Keep traversal and analysis streaming or bounded
 - Keep parallel work deterministic, bounded, and free of shared mutable hot spots
-- Borrow, move, intern, or share source text, normalized nodes, shingles, signatures, and paths
+- Borrow, move, intern, or share source text, normalized nodes, shingles, and paths
 - Avoid temporary `String`, `Vec`, map, and JSON allocations in hot loops
-- Calculate normalization, hashes, signatures, and metrics once per unchanged block
-- Never replace candidate generation with all-pairs comparison
+- Calculate normalization, hashes, shingles, and metrics once per unchanged block
+- Never use unconditional all-pairs candidate generation. A zero Jaccard threshold is the explicit exception because every eligible pair is a result
 - Generate benchmark fixtures deterministically
 - Keep fixture generation, cache warm-up, and cleanup outside timed sections
 - Compare benchmarks only with the same fixture, profile, machine, and cache state
@@ -118,7 +118,6 @@ Target stable Rust, edition 2024. `rustfmt` and Clippy define mechanical style.
 - Generated files and declarative Tree-sitter queries are exempt
 - Make module moves as clean cutovers; update all declarations and imports
 
-
 ## Testing
 
 Test observable behavior, boundaries, invariants, transitions, precedence, determinism, and real failures. Do not test Rust, Serde, Tree-sitter, or hashing-library behavior in isolation.
@@ -136,11 +135,11 @@ Required coverage:
 - deterministic terminal and JSON output
 - invalid input and partial parses without panics
 
-Tests must be deterministic, isolated, and full-suite-safe. Use fixed MinHash seeds and controlled metadata in cache tests. Do not depend on checkout contents, network services, wall-clock timing, or thread order.
+Tests must be deterministic, isolated, and full-suite-safe. Use controlled metadata in cache tests. Do not depend on checkout contents, network services, wall-clock timing, or thread order.
 
 - Put every Rust test body and test fixture under `src/tests/`
 - Register focused suites through `src/tests/mod.rs` and one `#[cfg(test)] mod tests;` declaration in `src/main.rs`
-- Do not add inline test bodies, sibling `*_tests.rs` files, or another Rust test directory
+- Do not use inline `#[cfg(test)] mod tests { ... }` blocks in production source files.
 
 ## Validation
 

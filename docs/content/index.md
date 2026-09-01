@@ -12,7 +12,7 @@ It finds exact, renamed, and near-miss duplicates without comparing every block 
 - [Languages](languages/index.md): Review supported files and analysis behavior.
 - [Output formats](operations/output.md): Use terminal or JSON reports.
 - [CLI reference](reference/cli.md): Review every command-line option.
-- [Under the hood](concepts/how-it-works.md): Learn how Tree-sitter, MinHash, LSH, and Jaccard verification work together.
+- [Under the hood](concepts/how-it-works.md): Learn how Tree-sitter, exact similarity joins, and Jaccard verification work together.
 
 ## Supported analysis
 

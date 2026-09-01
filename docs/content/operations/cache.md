@@ -26,9 +26,7 @@ Each cached analyzed block contains:
 - named-node count
 - canonical and normalized streams
 - exact and normalized hashes
-- normalized token hashes
 - sorted unique shingles
-- MinHash signature
 - complexity score
 
 Eligibility thresholds and report records are not cached.

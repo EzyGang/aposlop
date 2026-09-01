@@ -1,7 +1,6 @@
 mod exact;
-pub(crate) mod near_miss;
-
-use std::collections::HashSet;
+pub(crate) mod shingles;
+mod similarity_join;
 
 use serde::Serialize;
 
@@ -42,6 +41,17 @@ pub(super) struct EligibleBlock<'a> {
 
 #[must_use]
 pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneMatch> {
+    let blocks = eligible_blocks(files, config);
+    let exact::ExactResult {
+        mut classified,
+        mut matches,
+    } = exact::classify(&blocks);
+    similarity_join::classify(&blocks, &mut classified, &mut matches);
+    sort_matches(&mut matches);
+    matches
+}
+
+fn eligible_blocks<'a>(files: &'a [AnalyzedFile], config: &Config) -> Vec<EligibleBlock<'a>> {
     let mut source = Vec::new();
     for file in files {
         let rules = config.rules(file.identity.language.key(), file.identity.extension());
@@ -56,7 +66,7 @@ pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneMatch>
             .then(left.1.start_byte.cmp(&right.1.start_byte))
             .then(left.0.cmp(&right.0))
     });
-    let blocks: Vec<_> = source
+    source
         .into_iter()
         .filter(|(_, block, rules)| {
             block.line_count >= rules.min_lines && block.named_node_count >= rules.min_nodes
@@ -68,20 +78,16 @@ pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneMatch>
             block,
             rules,
         })
-        .collect();
+        .collect()
+}
 
-    let exact::ExactResult {
-        mut classified,
-        mut matches,
-    } = exact::classify(&blocks);
-    near_miss::classify(&blocks, &mut classified, &mut matches);
+fn sort_matches(matches: &mut [CloneMatch]) {
     matches.sort_unstable_by(|left, right| {
         left.kind
             .cmp(&right.kind)
             .then(left.left.cmp(&right.left))
             .then(left.right.cmp(&right.right))
     });
-    matches
 }
 
 impl Pair {
@@ -103,16 +109,4 @@ impl CloneMatch {
             right: right.location.clone(),
         }
     }
-}
-
-fn candidate_pairs(buckets: impl Iterator<Item = Vec<BlockId>>) -> HashSet<Pair> {
-    let mut candidates = HashSet::new();
-    for bucket in buckets {
-        for left in 0..bucket.len() {
-            for right in left + 1..bucket.len() {
-                candidates.insert(Pair::new(bucket[left], bucket[right]));
-            }
-        }
-    }
-    candidates
 }

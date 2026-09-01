@@ -4,7 +4,7 @@ use std::path::Path;
 use tree_sitter::Node;
 use xxhash_rust::xxh3::xxh3_64;
 
-use crate::detection::near_miss::{build_shingles, build_signature};
+use crate::detection::shingles::build_shingles;
 use crate::language::CompiledLanguage;
 
 use super::query::{capture_ranges, complexity};
@@ -54,7 +54,6 @@ pub(super) fn build_block(
     }
 
     let shingles = build_shingles(&token_hashes);
-    let signature = build_signature(&shingles);
     let start_line = block.start_position().row + 1;
     let end_line = block.end_position().row + 1;
 
@@ -72,9 +71,7 @@ pub(super) fn build_block(
         normalized_hash: xxh3_64(&normalized),
         exact,
         normalized,
-        token_hashes,
         shingles,
-        signature,
         complexity: complexity(provider, block, source),
     }
 }

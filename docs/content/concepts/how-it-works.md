@@ -7,11 +7,11 @@ This page explains the underlying approach without requiring knowledge of the co
 flowchart LR
   files[Supported source files] --> parse[Tree-sitter parsing]
   parse --> tokens[Canonical and normalized tokens]
-  tokens --> exact[Exact duplicate candidates]
-  tokens --> shingles[Shingles and MinHash]
-  shingles --> lsh[LSH candidates]
-  exact --> verify[Equality verification]
-  lsh --> jaccard[Jaccard verification]
+  tokens --> exact[Exact Type-1 and Type-2 candidates]
+  tokens --> shingles[Five-token shingles]
+  shingles --> join[Exact prefix-filtered similarity join]
+  exact --> verify[Byte equality verification]
+  join --> jaccard[Jaccard verification]
   verify --> report[Sorted report]
   jaccard --> report
   parse --> complexity[Complexity captures]
@@ -42,15 +42,17 @@ Equal canonical streams produce Type-1 matches.
 Normalized tokens replace identifiers and literals with category markers.
 Equal normalized streams produce Type-2 matches when canonical streams differ.
 
-## Near-miss candidates
+## Type-3 similarity join
 
 Aposlop creates five-token shingles from normalized tokens.
-It builds fixed MinHash signatures and groups similar signatures with Locality-Sensitive Hashing.
+It orders shingles by document frequency and partitions blocks by language and effective threshold.
 
-LSH does not prove a duplicate.
-Aposlop verifies every candidate with exact Jaccard similarity before reporting Type-3.
+Length filtering rejects blocks whose sizes cannot meet the Jaccard threshold.
+Prefix filtering uses an inverted index to find pairs that must share a rare prefix shingle.
+Positional filtering rejects pairs that cannot accumulate enough remaining overlap.
 
-This avoids comparing every block with every other block.
+Aposlop verifies every surviving candidate with exact Jaccard similarity.
+These filters do not discard threshold-qualified pairs.
 
 ## Complexity
 

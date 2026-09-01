@@ -33,9 +33,7 @@ pub(crate) struct AnalyzedBlock {
     pub(crate) normalized: Vec<u8>,
     pub(crate) exact_hash: u64,
     pub(crate) normalized_hash: u64,
-    pub(crate) token_hashes: Vec<u64>,
     pub(crate) shingles: Vec<u64>,
-    pub(crate) signature: Vec<u64>,
     pub(crate) complexity: usize,
 }
 

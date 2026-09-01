@@ -11,7 +11,7 @@ use crate::analysis::AnalyzedFile;
 use crate::ingest::SourceFile;
 
 pub(crate) const CACHE_FORMAT_VERSION: u32 = 1;
-pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 3;
+pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 4;
 const CACHE_NAME: &str = ".aposlop_cache";
 
 #[derive(Debug, Deserialize, Serialize)]
