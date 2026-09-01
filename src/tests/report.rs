@@ -11,7 +11,9 @@ use crate::cache::CacheDiagnostic;
 use crate::detection::{CloneKind, CloneMatch, FindingId};
 use crate::ingest::{FileIdentity, IngestDiagnostic};
 use crate::language::LanguageId;
-use crate::report::{DiagnosticCategory, REPORT_SCHEMA_VERSION, RenderOptions, build, render};
+use crate::report::{
+    DiagnosticCategory, REPORT_SCHEMA_VERSION, RenderOptions, build, render, render_ci,
+};
 use crate::{OutputFormat, TerminalOutput};
 
 use super::configuration::load_config;
@@ -174,16 +176,7 @@ fn ci_output_is_a_compact_finding_summary() -> TestResult {
         (&failing, &mut failing_output),
         (&passing, &mut passing_output),
     ] {
-        render(
-            output,
-            report,
-            RenderOptions {
-                format: OutputFormat::Ci,
-                terminal_output: TerminalOutput::Code,
-                root: Path::new("unused"),
-                color: true,
-            },
-        )?;
+        render_ci(output, report)?;
     }
 
     assert_eq!(

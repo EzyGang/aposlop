@@ -1,0 +1,27 @@
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "aposlop"
+dynamic = ["version"]
+description = "Detect duplicated code and report cyclomatic complexity across Rust, Python, TypeScript, and TSX"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT OR Apache-2.0"
+keywords = ["duplicates", "complexity", "static-analysis", "tree-sitter"]
+classifiers = [
+  "Environment :: Console",
+  "Programming Language :: Rust",
+  "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.urls]
+Homepage = "https://github.com/EzyGang/aposlop"
+Repository = "https://github.com/EzyGang/aposlop"
+Documentation = "https://github.com/EzyGang/aposlop/tree/main/docs"
+Issues = "https://github.com/EzyGang/aposlop/issues"
+
+[tool.maturin]
+bindings = "bin"
+strip = true

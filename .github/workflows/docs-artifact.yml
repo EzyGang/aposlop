@@ -1,0 +1,50 @@
+name: Documentation artifact
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs-artifact.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs-artifact.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build static site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          enable-cache: true
+          cache-dependency-glob: docs/uv.lock
+      - name: Install documentation dependencies
+        working-directory: docs
+        run: uv sync --locked --group dev
+      - name: Build static documentation
+        working-directory: docs
+        run: uv run zensical build
+      - name: Upload static site
+        uses: actions/upload-artifact@v7
+        with:
+          name: aposlop-docs-${{ github.sha }}
+          path: docs/site
+          if-no-files-found: error
+          retention-days: 14

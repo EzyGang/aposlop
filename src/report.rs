@@ -184,12 +184,11 @@ pub(crate) fn render(
             serde_json::to_writer_pretty(&mut *writer, report)?;
             writeln!(writer)?;
         }
-        OutputFormat::Ci => render_ci(writer, report)?,
     }
     Ok(())
 }
 
-fn render_ci(writer: &mut impl Write, report: &Report) -> std::io::Result<()> {
+pub(crate) fn render_ci(writer: &mut impl Write, report: &Report) -> Result<(), ReportError> {
     let status = if report.has_findings() {
         "failed"
     } else {
@@ -205,5 +204,6 @@ fn render_ci(writer: &mut impl Write, report: &Report) -> std::io::Result<()> {
         writer,
         "Complexity violations: {}",
         report.summary.complexity_violation_count
-    )
+    )?;
+    Ok(())
 }

@@ -15,7 +15,7 @@ CI output fails when duplicates or complexity violations exist.
 Use CI output when findings must fail an automated check:
 
 ```bash
-aposlop . --format ci
+aposlop ci .
 ```
 
 The command prints only its status, duplicate count, and complexity violation count.

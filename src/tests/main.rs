@@ -158,7 +158,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
         )?;
     }
     let target = fixture.path().to_string_lossy().into_owned();
-    let arguments = ["aposlop", target.as_str(), "--format", "ci"];
+    let arguments = ["aposlop", "ci", target.as_str()];
     let mut failing = Vec::new();
 
     let status = run(Cli::try_parse_from(arguments)?, &mut failing)?;
@@ -167,6 +167,17 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(
         String::from_utf8(failing)?,
         "Aposlop CI: failed\nDuplicate findings: 1\nComplexity violations: 0\n"
+    );
+
+    let mut overridden = Vec::new();
+    let status = run(
+        Cli::try_parse_from(["aposlop", "ci", target.as_str(), "--exclude", "right.rs"])?,
+        &mut overridden,
+    )?;
+    assert_eq!(status, CommandStatus::Success);
+    assert_eq!(
+        String::from_utf8(overridden)?,
+        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
     );
 
     fs::remove_file(fixture.path().join("right.rs"))?;
@@ -203,7 +214,7 @@ fn malformed_allow_list_is_an_actionable_failure() -> TestResult {
 
 #[test]
 fn usage_and_operational_failures_are_actionable() -> TestResult {
-    let usage = match Cli::try_parse_from(["aposlop", "--format", "xml"]) {
+    let usage = match Cli::try_parse_from(["aposlop", "--format", "ci"]) {
         Err(error) => error,
         Ok(_) => anyhow::bail!("invalid output format was accepted"),
     };

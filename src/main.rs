@@ -28,7 +28,6 @@ enum OutputFormat {
     #[default]
     Terminal,
     Json,
-    Ci,
 }
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, ValueEnum)]
 enum TerminalOutput {
@@ -41,6 +40,11 @@ pub(crate) enum CommandStatus {
     Success,
     Findings,
 }
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ScanMode {
+    Report,
+    Ci,
+}
 
 #[derive(Debug, Subcommand)]
 enum Command {
@@ -50,6 +54,12 @@ enum Command {
         finding: FindingId,
 
         /// Directory that owns the .aposlopignore file.
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+    /// Print a concise finding summary and fail when findings exist.
+    Ci {
+        /// Directory to analyze.
         #[arg(default_value = ".")]
         path: PathBuf,
     },
@@ -77,43 +87,43 @@ struct Cli {
     terminal_output: TerminalOutput,
 
     /// Override the minimum block line count.
-    #[arg(long, value_name = "N")]
+    #[arg(long, value_name = "N", global = true)]
     min_lines: Option<usize>,
 
     /// Override the minimum named-node count.
-    #[arg(long, value_name = "N")]
+    #[arg(long, value_name = "N", global = true)]
     min_nodes: Option<usize>,
 
     /// Replace configured exclusions relative to the target directory.
-    #[arg(long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH", global = true)]
     exclude: Vec<PathBuf>,
 
     /// Enable or disable the analysis cache.
-    #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     use_cache: Option<bool>,
 
     /// Enable or disable Type-1 duplicate reporting.
-    #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_1: Option<bool>,
 
     /// Enable or disable Type-2 duplicate reporting.
-    #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_2: Option<bool>,
 
     /// Enable or disable Type-3 duplicate reporting.
-    #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_3: Option<bool>,
 
     /// Override the Type-3 Jaccard similarity threshold.
-    #[arg(long, value_name = "RATIO")]
+    #[arg(long, value_name = "RATIO", global = true)]
     type_3_threshold: Option<f64>,
 
     /// Enable or disable complexity reporting.
-    #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     calculate_complexity: Option<bool>,
 
     /// Override the complexity violation threshold.
-    #[arg(long, value_name = "N")]
+    #[arg(long, value_name = "N", global = true)]
     complexity_threshold: Option<usize>,
 }
 
@@ -159,10 +169,19 @@ fn run_with_color(
     writer: &mut impl io::Write,
     color: bool,
 ) -> anyhow::Result<CommandStatus> {
-    if let Some(Command::Allow { finding, path }) = &cli.command {
-        return run_allow(path, *finding, writer);
+    match &cli.command {
+        Some(Command::Allow { finding, path }) => run_allow(path, *finding, writer),
+        Some(Command::Ci { path }) => {
+            if cli.format != OutputFormat::Terminal {
+                bail!("--format cannot be used with the ci command");
+            }
+            if cli.terminal_output != TerminalOutput::Locations {
+                bail!("--terminal-output cannot be used with the ci command");
+            }
+            run_scan(path, &cli, writer, color, ScanMode::Ci)
+        }
+        None => run_scan(&cli.path, &cli, writer, color, ScanMode::Report),
     }
-    run_scan(&cli, writer, color)
 }
 
 fn run_allow(
@@ -182,23 +201,29 @@ fn run_allow(
     Ok(CommandStatus::Success)
 }
 
-fn run_scan(cli: &Cli, writer: &mut impl io::Write, color: bool) -> anyhow::Result<CommandStatus> {
-    ensure_directory(&cli.path)?;
-    let config = Config::load(&cli.path)
-        .with_context(|| format!("failed to configure target {}", cli.path.display()))?
+fn run_scan(
+    root: &Path,
+    cli: &Cli,
+    writer: &mut impl io::Write,
+    color: bool,
+    mode: ScanMode,
+) -> anyhow::Result<CommandStatus> {
+    ensure_directory(root)?;
+    let config = Config::load(root)
+        .with_context(|| format!("failed to configure target {}", root.display()))?
         .apply_cli(cli.overrides())
-        .with_context(|| format!("failed to configure target {}", cli.path.display()))?;
-    let allow_list = AllowList::load(&cli.path)
-        .with_context(|| format!("failed to load allow list for {}", cli.path.display()))?;
+        .with_context(|| format!("failed to configure target {}", root.display()))?;
+    let allow_list = AllowList::load(root)
+        .with_context(|| format!("failed to load allow list for {}", root.display()))?;
     let registry =
         LanguageRegistry::compile().context("failed to initialize language providers")?;
-    let discovery = ingest::discover(&cli.path, &config, &registry)
-        .with_context(|| format!("failed to discover files under {}", cli.path.display()))?;
-    let resolution = cache::resolve(&cli.path, config.use_cache(), discovery.files);
+    let discovery = ingest::discover(root, &config, &registry)
+        .with_context(|| format!("failed to discover files under {}", root.display()))?;
+    let resolution = cache::resolve(root, config.use_cache(), discovery.files);
     let mut files = resolution.hits;
     files.extend(
         analysis::analyze(resolution.misses, &registry)
-            .with_context(|| format!("failed to analyze target {}", cli.path.display()))?,
+            .with_context(|| format!("failed to analyze target {}", root.display()))?,
     );
     files.sort_unstable_by(|left, right| left.identity.path.cmp(&right.identity.path));
     let duplicates = detection::detect(&files, &config);
@@ -210,20 +235,23 @@ fn run_scan(cli: &Cli, writer: &mut impl io::Write, color: bool) -> anyhow::Resu
         discovery.diagnostics,
         resolution.diagnostics,
     );
-    report::render(
-        writer,
-        &report,
-        report::RenderOptions {
-            format: cli.format,
-            terminal_output: cli.terminal_output,
-            root: &cli.path,
-            color,
-        },
-    )
-    .with_context(|| format!("failed to render report for {}", cli.path.display()))?;
-    cache::write(&cli.path, config.use_cache(), &files)
-        .with_context(|| format!("failed to persist cache for {}", cli.path.display()))?;
-    if cli.format == OutputFormat::Ci && report.has_findings() {
+    let render_result = match mode {
+        ScanMode::Report => report::render(
+            writer,
+            &report,
+            report::RenderOptions {
+                format: cli.format,
+                terminal_output: cli.terminal_output,
+                root,
+                color,
+            },
+        ),
+        ScanMode::Ci => report::render_ci(writer, &report),
+    };
+    render_result.with_context(|| format!("failed to render report for {}", root.display()))?;
+    cache::write(root, config.use_cache(), &files)
+        .with_context(|| format!("failed to persist cache for {}", root.display()))?;
+    if mode == ScanMode::Ci && report.has_findings() {
         Ok(CommandStatus::Findings)
     } else {
         Ok(CommandStatus::Success)

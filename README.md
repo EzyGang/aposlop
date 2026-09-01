@@ -1,84 +1,258 @@
 # Aposlop
 
-Aposlop detects duplicate code and reports cyclomatic complexity in Rust, Python, TypeScript, and TSX projects.
+<p align="center">
+<a href="https://github.com/EzyGang/aposlop/actions/workflows/ci.yml">
+    <img src="https://github.com/EzyGang/aposlop/actions/workflows/ci.yml/badge.svg" alt="CI status">
+</a>
+<a href="https://crates.io/crates/aposlop">
+    <img src="https://img.shields.io/crates/v/aposlop" alt="crates.io version">
+</a>
+<a href="https://pypi.org/project/aposlop/">
+    <img src="https://img.shields.io/pypi/v/aposlop" alt="PyPI version">
+</a>
+<a href="https://github.com/EzyGang/aposlop/blob/main/LICENSE-MIT">
+    <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue" alt="License">
+</a>
+</p>
 
-## Requirements
+---
 
-Aposlop requires a stable Rust toolchain that supports edition 2024.
+**Aposlop** is a fast command-line tool.
+It finds duplicate code and calculates cyclomatic complexity.
+
+Aposlop supports Rust, Python, TypeScript, and TSX.
+Aposlop uses Tree-sitter to parse each supported language.
+
+**Documentation**: [docs/content/index.md](docs/content/index.md)  
+**Source Code**: https://github.com/EzyGang/aposlop  
+**Issues**: https://github.com/EzyGang/aposlop/issues
+
+---
+
+## Table of Contents
+
+- [Why Aposlop?](#why-aposlop)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Features](#core-features)
+  - [Duplicate Detection](#duplicate-detection)
+  - [Cyclomatic Complexity](#cyclomatic-complexity)
+  - [Language Support](#language-support)
+  - [Output Formats](#output-formats)
+  - [Manual Exclusions](#manual-exclusions)
+- [Configuration](#configuration)
+- [CLI Quick Reference](#cli-quick-reference)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Why Aposlop?
+
+Aposlop exists to find code slop from coding agents.
+
+Coding agents can generate duplicate code and add complex control flow.
+These changes can enter a project faster than a reviewer can find them.
+
+Text comparison does not find a duplicate after an agent renames identifiers or changes literals.
+A linter does not find repeated logic in different files or languages.
+A complexity limit does not identify repeated logic.
+
+Aposlop uses exact, normalized, and verified near-miss duplicate detection.
+It also calculates cyclomatic complexity for each code block.
+
+Aposlop is fast enough for an agent validation loop.
+You can configure thresholds for each language and file extension.
+You can also exclude paths or accept specific findings.
+These controls let a project accept known findings and continue development.
+
+| Feature | Result |
+| --- | --- |
+| Type-1 detection | Finds exact duplicates |
+| Type-2 detection | Finds duplicates after identifier or literal changes |
+| Type-3 detection | Finds verified near-miss duplicates |
+| Complexity analysis | Calculates complexity for each code block |
+| Terminal code view | Shows both source ranges with line numbers |
+| JSON output | Provides stable data for other tools |
+| CI command | Returns failure when findings remain |
+| Local cache | Reuses analysis for unchanged files |
+
+---
 
 ## Installation
 
-Install Aposlop from this checkout:
+### Cargo
 
-```text
-cargo install --path .
+Install Aposlop from crates.io:
+
+```bash
+cargo install aposlop --locked
 ```
 
-Confirm the installation:
+### PyPI with uv
 
-```text
+Install Aposlop as a global tool:
+
+```bash
+uv tool install aposlop
+```
+
+Run Aposlop without installing it:
+
+```bash
+uvx aposlop --help
+```
+
+### Homebrew
+
+Install Aposlop from the EzyGang Homebrew tap:
+
+```bash
+brew install EzyGang/tap/aposlop
+```
+
+### From source
+
+Install Aposlop from source.
+A stable Rust toolchain must support edition 2024.
+
+```bash
+git clone https://github.com/EzyGang/aposlop.git
+cd aposlop
+cargo install --path . --locked
+```
+
+Verify the installation:
+
+```bash
 aposlop --version
 aposlop --help
 ```
 
-## Documentation
+---
 
-The complete user guide starts at [`docs/content/index.md`](docs/content/index.md).
+## Quick Start
 
-Preview the documentation site:
+Analyze the current directory:
 
-```text
-cd docs
-uv sync --group dev
-uv run zensical serve
+```bash
+aposlop .
 ```
 
-## Command line
+Show the source for each duplicate:
 
-```text
-aposlop [PATH] [OPTIONS]
-aposlop allow <FINDING> [PATH]
+```bash
+aposlop . --terminal-output code
 ```
 
-`PATH` identifies the target directory.
-The target directory defaults to the current directory.
+Run CI validation:
 
-| Option | Purpose |
-| --- | --- |
-| `--format <terminal\|json\|ci>` | Select terminal, JSON, or CI output with `terminal` as the default. |
-| `--terminal-output <locations\|code>` | Select duplicate locations or source excerpts for terminal output. |
-| `--min-lines <N>` | Override `core.min_lines`. |
-| `--min-nodes <N>` | Override `core.min_nodes`. |
-| `--exclude <PATH>` | Replace `core.exclude` with one or more repeated options. |
-| `--use-cache <BOOL>` | Override `core.use_cache` with `true` or `false`. |
-| `--type-1 <BOOL>` | Override `duplicates_detection.type_1`. |
-| `--type-2 <BOOL>` | Override `duplicates_detection.type_2`. |
-| `--type-3 <BOOL>` | Override `duplicates_detection.type_3`. |
-| `--type-3-threshold <RATIO>` | Override `duplicates_detection.type_3_threshold`. |
-| `--calculate-complexity <BOOL>` | Override `metrics.calculate_complexity`. |
-| `--complexity-threshold <N>` | Override `metrics.complexity_threshold`. |
-| `-h`, `--help` | Print command help. |
-| `-V`, `--version` | Print the Aposlop version. |
+```bash
+aposlop ci .
+```
 
-Boolean options require an explicit `true` or `false` value.
-Repeated `--exclude` options form one replacement list.
+The `ci` command returns exit code `1` when a finding remains.
 
-## Supported files
+Write the complete report as JSON:
 
-| Language | Extension |
+```bash
+aposlop . --format json > aposlop-report.json
+```
+
+[Read the full quick-start guide](docs/content/getting-started/quickstart.md).
+
+---
+
+## Core Features
+
+### Duplicate Detection
+
+A block enters analysis when it meets the line and named-node limits.
+
+Aposlop classifies duplicate findings in this order:
+
+1. Type-1 requires identical canonical syntax.
+2. Type-2 allows different identifiers and literals.
+3. Type-3 requires a Jaccard similarity at or above the configured threshold.
+
+Aposlop reports each block pair one time.
+A TypeScript block can match a TSX block.
+
+[Read the duplicate model](docs/content/concepts/duplicate-types.md).
+
+### Cyclomatic Complexity
+
+Each valid block has an initial complexity score of `1`.
+Aposlop adds one for each language-specific decision.
+Decisions include branches, loops, alternatives, exception paths, conditional expressions, and short-circuit operations.
+
+A nested block has an independent score.
+Nested blocks include functions, closures, lambdas, field initializers, and static blocks.
+
+A violation requires:
+
+```text
+score > complexity_threshold
+```
+
+[Read the complexity model](docs/content/concepts/complexity.md).
+
+### Language Support
+
+| Language | Extensions |
 | --- | --- |
 | Rust | `.rs` |
 | Python | `.py` |
 | TypeScript | `.ts` |
 | TSX | `.tsx` |
 
-Aposlop skips unsupported extensions.
-Aposlop respects standard ignore files, including `.gitignore`.
+Aposlop ignores unsupported extensions.
+Aposlop follows standard ignore files such as `.gitignore`.
+
+[Read the language guides](docs/content/languages/index.md).
+
+### Output Formats
+
+The terminal report is the default.
+It contains duplicate findings, complexity findings, diagnostics, and a summary.
+
+```bash
+aposlop . --format terminal
+```
+
+The JSON report contains the complete report and its schema version.
+
+```bash
+aposlop . --format json
+```
+
+The `ci` command shows only the status and finding counts.
+
+```bash
+aposlop ci .
+```
+
+[Read the output guide](docs/content/operations/output.md).
+
+### Manual Exclusions
+
+Aposlop assigns a deterministic five-character ID to each duplicate or complexity finding.
+
+Add a finding to the manual exclusions:
+
+```bash
+aposlop allow aB7_x
+```
+
+The command writes the ID to `.aposlopignore`.
+Delete the ID from that file to restore the finding.
+
+---
 
 ## Configuration
 
-Aposlop loads `<PATH>/.aposlop.toml` from the target directory.
-Aposlop uses built-in defaults when this file does not exist.
+Aposlop reads `<PATH>/.aposlop.toml`.
+Aposlop uses built-in values when this file does not exist.
 
 ```toml
 [core]
@@ -98,81 +272,55 @@ calculate_complexity = true
 complexity_threshold = 15
 ```
 
-Configuration rejects unknown fields, zero count thresholds, invalid ratios, absolute exclusions, and exclusions containing `..`.
-The similarity ratio must be finite and within `0.0..=1.0`.
+Language and extension tables can override the core values.
+Command-line values override all configuration-file values.
 
-See the [configuration guide](docs/content/configuration/index.md) for language overrides, extension overrides, and precedence.
+[Read the configuration guide](docs/content/configuration/index.md).
 
-## Duplicate types
+---
 
-A block qualifies when it meets its effective minimum line count and named-node count.
-Both blocks must enable a duplicate type before Aposlop reports a duplicate match.
+## CLI Quick Reference
 
-- A Type-1 duplicate match contains equal canonical streams.
-- A Type-2 duplicate match contains different canonical streams and equal normalized streams.
-- A Type-3 duplicate match meets the verified Jaccard similarity threshold.
+| Command or option | Purpose |
+| --- | --- |
+| `aposlop ci [PATH]` | Print a concise finding summary and fail when findings exist |
+| `aposlop allow <FINDING> [PATH]` | Add a finding to the target's manual exclusions |
+| `--format <terminal\|json>` | Select the report format |
+| `--terminal-output <locations\|code>` | Select terminal duplicate detail |
+| `--min-lines <N>` | Override the minimum block line count |
+| `--min-nodes <N>` | Override the minimum named-node count |
+| `--exclude <PATH>` | Replace configured exclusions |
+| `--use-cache <BOOL>` | Enable or disable the analysis cache |
+| `--type-1 <BOOL>` | Enable or disable Type-1 findings |
+| `--type-2 <BOOL>` | Enable or disable Type-2 findings |
+| `--type-3 <BOOL>` | Enable or disable Type-3 findings |
+| `--type-3-threshold <RATIO>` | Override the Type-3 threshold |
+| `--calculate-complexity <BOOL>` | Enable or disable complexity findings |
+| `--complexity-threshold <N>` | Override the complexity threshold |
 
-Aposlop applies Type-1, Type-2, and Type-3 precedence.
-Aposlop reports each duplicate match once.
-TypeScript and TSX blocks can form one duplicate match.
+[Read the complete CLI reference](docs/content/reference/cli.md).
 
-## Complexity
+---
 
-Aposlop calculates cyclomatic complexity as one plus the unique decisions inside each block.
-Decisions include branches, loops, alternatives, exception branches, conditional expressions, and short-circuit Boolean operations.
+## Contributing
 
-Aposlop reports a violation when the score exceeds `complexity_threshold`.
-Set `calculate_complexity = false` to hide complexity violations.
+Open a [GitHub issue](https://github.com/EzyGang/aposlop/issues) to discuss a large change.
+Then open a pull request.
 
-## Manual exclusions
+Run these checks before you submit the pull request:
 
-Each duplicate and complexity finding has a deterministic five-character ID.
-Save any finding ID in the target directory's manual exclusions file:
-
-```text
-aposlop allow aB7_x .
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
+cargo run -- --help
 ```
 
-Aposlop stores allowed IDs in `<PATH>/.aposlopignore`.
-Each non-comment line contains one manually excluded finding ID.
-Subsequent scans omit matching duplicate and complexity findings from all reports.
-Remove an ID from `.aposlopignore` to report that finding again.
+---
 
-Keep `.aposlopignore` local and add it to `.gitignore`.
+## License
 
-## Cache
+You can use Aposlop under either license:
 
-Aposlop stores versioned analysis data in `<PATH>/.aposlop_cache`.
-A cache hit requires unchanged file metadata, language identity, cache format, and analysis schema values.
-
-Aposlop treats missing, stale, incompatible, or corrupt entries as cache misses.
-Aposlop reports corrupt cache data and replaces the cache after successful analysis.
-Disabled caching performs no cache read or write.
-
-Add `.aposlop_cache` to `.gitignore`.
-Keep `.aposlop_cache` ignored.
-
-## Output formats
-
-Terminal output contains structured duplicate, complexity, diagnostic, and summary sections.
-Duplicate locations use `path:line` anchors and show their complete line ranges.
-Use `--terminal-output code` to print both source ranges with line numbers.
-
-JSON output contains `schema_version`, `summary`, `duplicates`, `complexity`, and `diagnostics`.
-Each JSON duplicate and complexity violation includes the same ID used by `aposlop allow`.
-Aposlop sorts the shared report data before either output format writes it.
-JSON output ends with one newline.
-
-CI output contains only duplicate and complexity counts.
-`--format ci` returns exit code `1` when either count is nonzero.
-
-Reports use paths relative to the target directory.
-Partial syntax errors produce diagnostics while valid sibling blocks continue through analysis.
-
-## Exit codes
-
-| Code | Meaning |
-| --- | --- |
-| `0` | Aposlop completed successfully, and CI output found no reportable findings. |
-| `1` | Aposlop failed operationally, or CI output found duplicates or complexity violations. |
-| `2` | Command-line usage was invalid. |
+- [MIT](LICENSE-MIT)
+- [Apache License 2.0](LICENSE-APACHE)

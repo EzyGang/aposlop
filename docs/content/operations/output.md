@@ -50,10 +50,10 @@ See the [JSON report reference](../reference/json-report.md) for every field.
 Select concise CI output explicitly:
 
 ```bash
-aposlop . --format ci
+aposlop ci .
 ```
 
-CI output contains a pass or fail status and both finding counts.
+The `ci` command prints a pass or fail status and both finding counts.
 It omits paths, source code, diagnostics, and aggregate scan statistics.
 Aposlop returns exit code `1` when duplicates or complexity violations exist.
 It returns exit code `0` when both finding counts are zero.

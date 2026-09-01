@@ -1,9 +1,10 @@
 # CLI reference
 
-Aposlop scans one optional target directory or updates its local duplicate allow list.
+Aposlop scans one optional target directory, runs a CI finding check, or updates manual exclusions.
 
 ```text
 aposlop [PATH] [OPTIONS]
+aposlop ci [PATH] [OPTIONS]
 aposlop allow <FINDING> [PATH]
 ```
 
@@ -13,7 +14,7 @@ aposlop allow <FINDING> [PATH]
 
 | Option | Type | Default | Purpose |
 | --- | --- | --- | --- |
-| `--format <FORMAT>` | `terminal`, `json`, or `ci` | `terminal` | Select the output format. |
+| `--format <FORMAT>` | `terminal` or `json` | `terminal` | Select the report format. |
 | `--terminal-output <OUTPUT>` | `locations` or `code` | `locations` | Select terminal duplicate detail. |
 
 ## Eligibility
@@ -46,6 +47,16 @@ aposlop allow <FINDING> [PATH]
 | `--calculate-complexity <BOOL>` | `true` or `false` | Override `metrics.calculate_complexity`. |
 | `--complexity-threshold <N>` | Positive integer | Override `metrics.complexity_threshold`. |
 
+## CI command
+
+`aposlop ci [PATH]` prints only status and duplicate and complexity finding counts.
+It returns exit code `1` when either finding count is nonzero.
+Analysis override options can follow the command.
+
+```bash
+aposlop ci ../project --exclude generated/
+```
+
 ## Allow command
 
 `aposlop allow <FINDING> [PATH]` saves one duplicate or complexity finding ID in `<PATH>/.aposlopignore`.
@@ -76,7 +87,7 @@ aposlop ../project --format json
 Run a concise finding check for CI:
 
 ```bash
-aposlop . --format ci
+aposlop ci .
 ```
 
 Disable Type-2 duplicate matches and the cache for one run:
