@@ -86,6 +86,21 @@ These controls let a project accept known findings and continue development.
 | Local cache         | Reuses analysis for unchanged files                     |
 | Update check        | Warns interactive users when a new release is available |
 
+<details>
+<summary><strong>How Aposlop works</strong></summary>
+
+- **Parse once.** Tree-sitter providers extract blocks, identifiers, literals, comments, and complexity decisions.
+- **Type-1.** XXH3 groups exact token streams before complete equality verification.
+- **Type-2.** The same process compares streams with normalized identifiers and literals.
+- **Type-3.** Five-token shingles feed a prefix-filtered similarity join.
+  Length and position filters prune candidates before Jaccard verification.
+- **Complexity.** Each block starts at `1` and adds unique language-specific decision captures.
+  Nested blocks have independent scores.
+- **Cache.** Versioned bincode data reuses unchanged analysis.
+  File metadata and schema versions invalidate stale entries before atomic replacement.
+
+</details>
+
 ---
 
 ## Installation
