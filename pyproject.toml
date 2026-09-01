@@ -19,7 +19,7 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/EzyGang/aposlop"
 Repository = "https://github.com/EzyGang/aposlop"
-Documentation = "https://github.com/EzyGang/aposlop/tree/main/docs"
+Documentation = "https://aposlop.ezygang.digital/"
 Issues = "https://github.com/EzyGang/aposlop/issues"
 
 [tool.maturin]

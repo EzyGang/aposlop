@@ -6,6 +6,7 @@ description = "Detect duplicated code and report cyclomatic complexity across Ru
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/EzyGang/aposlop"
 homepage = "https://github.com/EzyGang/aposlop"
+documentation = "https://aposlop.ezygang.digital/"
 readme = "README.md"
 keywords = ["duplicates", "complexity", "cli", "tree-sitter", "static-analysis"]
 categories = ["command-line-utilities", "development-tools"]

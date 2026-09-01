@@ -1,0 +1,50 @@
+name: Feature request
+description: Propose a new Aposlop capability
+title: "feature: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write the issue description yourself.
+        Do not use AI to draft or rewrite it.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the problem that needs a solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the observable behavior that you want.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Describe other solutions that you considered.
+    validations:
+      required: false
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: Show a command, configuration, input, or output example.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I wrote this issue description without AI assistance.
+          required: true
+        - label: I searched existing issues for this request.
+          required: true
+        - label: I can explain why this belongs in Aposlop.
+          required: true

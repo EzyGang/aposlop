@@ -1,0 +1,73 @@
+name: Bug report
+description: Report incorrect Aposlop behavior
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Write the issue description yourself.
+        Do not use AI to draft or rewrite it.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Describe the defect and its effect in your own words.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: List the smallest steps that reproduce the defect.
+      placeholder: |
+        1. Create this input.
+        2. Run this command.
+        3. Observe this result.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the expected result.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the exact output or diagnostic.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Aposlop version
+      placeholder: "aposlop 1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system and architecture
+      placeholder: "Windows 11 x86-64"
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add relevant configuration or source examples.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I wrote this issue description without AI assistance.
+          required: true
+        - label: I searched existing issues for this defect.
+          required: true

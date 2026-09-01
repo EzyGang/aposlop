@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Aposlop documentation
+    url: https://aposlop.ezygang.digital/
+    about: Read installation, configuration, language, and output guidance.

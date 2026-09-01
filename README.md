@@ -1,7 +1,7 @@
 # Aposlop
 
 <p align="center">
-<a href="docs/content/index.md">
+<a href="https://aposlop.ezygang.digital/">
     <img src="docs/content/images/icon.png" width="320" alt="Aposlop">
 </a>
 </p>
@@ -29,7 +29,7 @@ It finds duplicate code and calculates cyclomatic complexity.
 Aposlop supports Rust, Python, TypeScript, and TSX.
 Aposlop uses Tree-sitter to parse each supported language.
 
-**Documentation**: [docs/content/index.md](docs/content/index.md)  
+**Documentation**: https://aposlop.ezygang.digital/
 **Source Code**: https://github.com/EzyGang/aposlop  
 **Issues**: https://github.com/EzyGang/aposlop/issues
 
@@ -201,7 +201,7 @@ Write the complete report as JSON:
 aposlop . --format json > aposlop-report.json
 ```
 
-[Read the full quick-start guide](docs/content/getting-started/quickstart.md).
+[Read the full quick-start guide](https://aposlop.ezygang.digital/getting-started/quickstart/).
 
 ---
 
@@ -220,7 +220,7 @@ Aposlop classifies duplicate findings in this order:
 Aposlop reports each block pair one time.
 A TypeScript block can match a TSX block.
 
-[Read the duplicate model](docs/content/concepts/duplicate-types.md).
+[Read the duplicate model](https://aposlop.ezygang.digital/concepts/duplicate-types/).
 
 ### Cyclomatic Complexity
 
@@ -237,7 +237,7 @@ A violation requires:
 score > complexity_threshold
 ```
 
-[Read the complexity model](docs/content/concepts/complexity.md).
+[Read the complexity model](https://aposlop.ezygang.digital/concepts/complexity/).
 
 ### Language Support
 
@@ -251,7 +251,7 @@ score > complexity_threshold
 Aposlop ignores unsupported extensions.
 Aposlop follows standard ignore files such as `.gitignore`.
 
-[Read the language guides](docs/content/languages/index.md).
+[Read the language guides](https://aposlop.ezygang.digital/languages/).
 
 ### Output Formats
 
@@ -274,7 +274,7 @@ The `ci` command shows only the status and finding counts.
 aposlop ci .
 ```
 
-[Read the output guide](docs/content/operations/output.md).
+[Read the output guide](https://aposlop.ezygang.digital/operations/output/).
 
 ### Manual Exclusions
 
@@ -317,7 +317,7 @@ complexity_threshold = 15
 Language and extension tables can override the core values.
 Command-line values override all configuration-file values.
 
-[Read the configuration guide](docs/content/configuration/index.md).
+[Read the configuration guide](https://aposlop.ezygang.digital/configuration/).
 
 ---
 
@@ -340,7 +340,7 @@ Command-line values override all configuration-file values.
 | `--calculate-complexity <BOOL>` | Enable or disable complexity findings |
 | `--complexity-threshold <N>` | Override the complexity threshold |
 
-[Read the complete CLI reference](docs/content/reference/cli.md).
+[Read the complete CLI reference](https://aposlop.ezygang.digital/reference/cli/).
 
 ---
 

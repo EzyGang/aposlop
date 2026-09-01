@@ -81,8 +81,10 @@ jobs:
           restore-keys: cargo-package-
       - name: Validate Cargo package
         run: cargo package --locked
-      - name: Validate POSIX installer syntax
-        run: bash -n scripts/install.sh
+      - name: Validate shell script syntax
+        run: |
+          bash -n scripts/install.sh
+          bash -n scripts/download-docs.sh
       - name: Validate PowerShell installer syntax
         shell: pwsh
         run: |
