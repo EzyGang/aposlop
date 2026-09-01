@@ -175,6 +175,17 @@ aposlop --version
 aposlop --help
 ```
 
+### Agent skill
+
+Install the Aposlop skill for supported coding agents:
+
+```bash
+npx skills@latest add EzyGang/aposlop --skill aposlop
+```
+
+The skill teaches agents how to configure Aposlop, inspect findings, and add Aposlop to validation workflows.
+The skill does not install the Aposlop binary.
+
 ### Update checks
 
 Aposlop checks for a new GitHub release during interactive runs.

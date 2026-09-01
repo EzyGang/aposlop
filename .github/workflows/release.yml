@@ -173,6 +173,7 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --locked --out wheelhouse
           manylinux: auto
+          docker-options: -e CFLAGS=-D_BSD_SOURCE
       - name: Upload PyPI wheel
         uses: actions/upload-artifact@v7
         with:
