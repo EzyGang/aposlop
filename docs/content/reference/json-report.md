@@ -7,7 +7,7 @@ JSON output ends with one newline.
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | The report schema version is `1`. |
+| `schema_version` | The report schema version is `3`. |
 | `summary` | Aggregate file, block, duplicate, and complexity counts. |
 | `duplicates` | Sorted duplicate matches. |
 | `complexity` | Sorted complexity violations. |
@@ -17,6 +17,7 @@ JSON output ends with one newline.
 
 Each duplicate match contains these fields:
 
+- `id` contains the deterministic finding ID accepted by `aposlop allow`.
 - `kind` contains `type_1`, `type_2`, or `type_3`.
 - `similarity` contains exact or verified Jaccard similarity.
 - `left` contains the first source location.
@@ -28,6 +29,7 @@ Each location contains a path relative to the target directory and one-based lin
 
 Each complexity violation contains these fields:
 
+- `id` contains the deterministic finding ID accepted by `aposlop allow`.
 - `location` contains the source location.
 - `score` contains calculated cyclomatic complexity.
 - `threshold` contains the effective threshold for that block.
@@ -44,15 +46,16 @@ Each diagnostic contains these fields:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 3,
   "summary": {
     "scanned_files": 2,
     "analyzed_blocks": 2,
     "duplicate_count": 1,
-    "complexity_violation_count": 0
+    "complexity_violation_count": 1
   },
   "duplicates": [
     {
+      "id": "aB7_x",
       "kind": "type_1",
       "similarity": 1.0,
       "left": {
@@ -67,7 +70,18 @@ Each diagnostic contains these fields:
       }
     }
   ],
-  "complexity": [],
+  "complexity": [
+    {
+      "id": "p9_K2",
+      "location": {
+        "path": "src/complex.rs",
+        "start_line": 8,
+        "end_line": 24
+      },
+      "score": 18,
+      "threshold": 15
+    }
+  ],
   "diagnostics": []
 }
 ```

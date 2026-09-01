@@ -1,14 +1,18 @@
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 
-use crate::OutputFormat;
+use tempfile::TempDir;
+
+use crate::allow_list::AllowList;
 use crate::analysis::{
     AnalysisDiagnostic, AnalysisDiagnosticKind, AnalyzedBlock, AnalyzedFile, SourceLocation,
 };
 use crate::cache::CacheDiagnostic;
-use crate::detection::{CloneKind, CloneMatch};
+use crate::detection::{CloneKind, CloneMatch, FindingId};
 use crate::ingest::{FileIdentity, IngestDiagnostic};
 use crate::language::LanguageId;
-use crate::report::{DiagnosticCategory, REPORT_SCHEMA_VERSION, build, render};
+use crate::report::{DiagnosticCategory, REPORT_SCHEMA_VERSION, RenderOptions, build, render};
+use crate::{OutputFormat, TerminalOutput};
 
 use super::configuration::load_config;
 type TestResult = anyhow::Result<()>;
@@ -22,16 +26,12 @@ fn report_filters_strict_complexity_thresholds_and_sorts_data() -> TestResult {
         path: PathBuf::from("source.rs"),
         kind: AnalysisDiagnosticKind::PartialParse,
     });
-    let duplicate = CloneMatch {
-        kind: CloneKind::Type2,
-        similarity: 1.0,
-        left: location("source.rs", 1),
-        right: location("source.rs", 6),
-    };
+    let duplicate = duplicate(CloneKind::Type2, "source.rs", 1, "source.rs", 6);
     let report = build(
         &[file],
         vec![duplicate],
         &config,
+        &AllowList::default(),
         vec![IngestDiagnostic {
             path: PathBuf::from("walk"),
             message: "walk failed".to_owned(),
@@ -61,6 +61,7 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
         std::slice::from_ref(&file),
         Vec::new(),
         &load_config("[metrics]\ncomplexity_threshold = 1")?,
+        &AllowList::default(),
         Vec::new(),
         Vec::new(),
     );
@@ -68,6 +69,7 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
         std::slice::from_ref(&file),
         Vec::new(),
         &load_config("[metrics]\ncalculate_complexity = false")?,
+        &AllowList::default(),
         Vec::new(),
         Vec::new(),
     );
@@ -81,34 +83,173 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
 #[test]
 fn terminal_and_json_render_the_same_report_contract() -> TestResult {
     let config = load_config("[core]\nmin_lines = 1\nmin_nodes = 1")?;
-    let duplicate = CloneMatch {
-        kind: CloneKind::Type1,
-        similarity: 1.0,
-        left: location("left.rs", 1),
-        right: location("right.rs", 1),
-    };
+    let duplicate = duplicate(CloneKind::Type1, "left.rs", 1, "right.rs", 1);
     let report = build(
-        &[analyzed_file("source.rs", &[1])],
+        &[analyzed_file("source.rs", &[16])],
         vec![duplicate],
         &config,
+        &AllowList::default(),
         Vec::new(),
         Vec::new(),
     );
     let mut terminal = Vec::new();
     let mut json = Vec::new();
-    render(&mut terminal, &report, OutputFormat::Terminal)?;
-    render(&mut json, &report, OutputFormat::Json)?;
+    render(
+        &mut terminal,
+        &report,
+        RenderOptions {
+            format: OutputFormat::Terminal,
+            terminal_output: TerminalOutput::Locations,
+            root: Path::new("."),
+            color: false,
+        },
+    )?;
+    render(
+        &mut json,
+        &report,
+        RenderOptions {
+            format: OutputFormat::Json,
+            terminal_output: TerminalOutput::Code,
+            root: Path::new("."),
+            color: false,
+        },
+    )?;
 
     let terminal = String::from_utf8(terminal)?;
-    assert!(terminal.contains("Duplicates"));
-    assert!(terminal.contains("Complexity"));
-    assert!(terminal.contains("Diagnostics"));
+    assert!(terminal.contains("Duplicates (1)"));
+    assert!(terminal.contains("left.rs:1"));
+    assert!(terminal.contains("lines 1–5 (5 lines)"));
+    assert!(terminal.contains(&report.duplicates[0].id.to_string()));
+    assert!(!terminal.contains("Type1"));
+    assert!(terminal.contains("Complexity (1)"));
+    assert!(terminal.contains(&report.complexity[0].id.to_string()));
+    assert!(terminal.contains("Diagnostics (0)"));
     assert!(terminal.contains("Summary"));
+    assert!(terminal.ends_with("  Complexity violations: 1\n"));
     assert!(json.ends_with(b"\n"));
     let value: serde_json::Value = serde_json::from_slice(&json)?;
     assert_eq!(value["schema_version"], REPORT_SCHEMA_VERSION);
     assert_eq!(value["duplicates"][0]["kind"], "type_1");
     assert_eq!(value["summary"]["duplicate_count"], 1);
+    assert_eq!(
+        value["complexity"][0]["id"],
+        report.complexity[0].id.to_string()
+    );
+    let finding_id = value["duplicates"][0]["id"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("JSON duplicate did not contain an ID"))?;
+    assert_eq!(finding_id.len(), 5);
+    assert!(finding_id.as_bytes()[0].is_ascii_alphanumeric());
+    assert!(
+        finding_id
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+    );
+    Ok(())
+}
+
+#[test]
+fn ci_output_is_a_compact_finding_summary() -> TestResult {
+    let duplicate = duplicate(CloneKind::Type1, "left.rs", 1, "right.rs", 1);
+    let failing = build(
+        &[analyzed_file("source.rs", &[4])],
+        vec![duplicate],
+        &load_config("[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3")?,
+        &AllowList::default(),
+        Vec::new(),
+        Vec::new(),
+    );
+    let passing = build(
+        &[analyzed_file("source.rs", &[3])],
+        Vec::new(),
+        &load_config("[metrics]\ncomplexity_threshold = 3")?,
+        &AllowList::default(),
+        Vec::new(),
+        Vec::new(),
+    );
+    let mut failing_output = Vec::new();
+    let mut passing_output = Vec::new();
+
+    for (report, output) in [
+        (&failing, &mut failing_output),
+        (&passing, &mut passing_output),
+    ] {
+        render(
+            output,
+            report,
+            RenderOptions {
+                format: OutputFormat::Ci,
+                terminal_output: TerminalOutput::Code,
+                root: Path::new("unused"),
+                color: true,
+            },
+        )?;
+    }
+
+    assert_eq!(
+        String::from_utf8(failing_output)?,
+        "Aposlop CI: failed\nDuplicate findings: 1\nComplexity violations: 1\n"
+    );
+    assert_eq!(
+        String::from_utf8(passing_output)?,
+        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
+    );
+    Ok(())
+}
+
+#[test]
+fn finding_ids_are_deterministic_and_order_independent() -> TestResult {
+    let left = location("src/left.rs", 10);
+    let right = location("src/right.rs", 20);
+    let id = FindingId::for_duplicate_locations(&left, &right);
+
+    assert_eq!(id, FindingId::for_duplicate_locations(&left, &right));
+    assert_eq!(id, FindingId::for_duplicate_locations(&right, &left));
+    let complexity_id = FindingId::for_complexity_location(&left);
+    assert_eq!(complexity_id, FindingId::for_complexity_location(&left));
+    assert_ne!(id, complexity_id);
+    assert_eq!(id.to_string().parse::<FindingId>()?, id);
+    assert!("abcd".parse::<FindingId>().is_err());
+    assert!("-abcd".parse::<FindingId>().is_err());
+    assert!("abc.d".parse::<FindingId>().is_err());
+    Ok(())
+}
+
+#[test]
+fn terminal_code_output_prints_both_duplicate_ranges() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join("left.rs"),
+        "fn left() {\n    let value = 1;\n    println!(\"{value}\");\n    drop(value);\n}\n",
+    )?;
+    fs::write(
+        fixture.path().join("right.rs"),
+        "fn right() {\n    let value = 2;\n    println!(\"{value}\");\n    drop(value);\n}\n",
+    )?;
+    let report = build(
+        &[analyzed_file("source.rs", &[1])],
+        vec![duplicate(CloneKind::Type3, "left.rs", 1, "right.rs", 1)],
+        &load_config("[core]\nmin_lines = 1\nmin_nodes = 1")?,
+        &AllowList::default(),
+        Vec::new(),
+        Vec::new(),
+    );
+    let mut output = Vec::new();
+
+    render(
+        &mut output,
+        &report,
+        RenderOptions {
+            format: OutputFormat::Terminal,
+            terminal_output: TerminalOutput::Code,
+            root: fixture.path(),
+            color: false,
+        },
+    )?;
+
+    let output = String::from_utf8(output)?;
+    assert!(output.contains("  Left code\n    1 │ fn left() {"));
+    assert!(output.contains("  Right code\n    1 │ fn right() {"));
     Ok(())
 }
 
@@ -139,6 +280,24 @@ fn analyzed_file(path: &str, scores: &[usize]) -> AnalyzedFile {
             })
             .collect(),
         diagnostics: Vec::new(),
+    }
+}
+
+fn duplicate(
+    kind: CloneKind,
+    left_path: &str,
+    left_line: usize,
+    right_path: &str,
+    right_line: usize,
+) -> CloneMatch {
+    let left = location(left_path, left_line);
+    let right = location(right_path, right_line);
+    CloneMatch {
+        kind,
+        similarity: 1.0,
+        id: FindingId::for_duplicate_locations(&left, &right),
+        left,
+        right,
     }
 }
 

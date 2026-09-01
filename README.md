@@ -37,6 +37,7 @@ uv run zensical serve
 
 ```text
 aposlop [PATH] [OPTIONS]
+aposlop allow <FINDING> [PATH]
 ```
 
 `PATH` identifies the target directory.
@@ -44,7 +45,8 @@ The target directory defaults to the current directory.
 
 | Option | Purpose |
 | --- | --- |
-| `--format <terminal\|json>` | Select terminal or JSON output with `terminal` as the default. |
+| `--format <terminal\|json\|ci>` | Select terminal, JSON, or CI output with `terminal` as the default. |
+| `--terminal-output <locations\|code>` | Select duplicate locations or source excerpts for terminal output. |
 | `--min-lines <N>` | Override `core.min_lines`. |
 | `--min-nodes <N>` | Override `core.min_nodes`. |
 | `--exclude <PATH>` | Replace `core.exclude` with one or more repeated options. |
@@ -122,6 +124,22 @@ Decisions include branches, loops, alternatives, exception branches, conditional
 Aposlop reports a violation when the score exceeds `complexity_threshold`.
 Set `calculate_complexity = false` to hide complexity violations.
 
+## Manual exclusions
+
+Each duplicate and complexity finding has a deterministic five-character ID.
+Save any finding ID in the target directory's manual exclusions file:
+
+```text
+aposlop allow aB7_x .
+```
+
+Aposlop stores allowed IDs in `<PATH>/.aposlopignore`.
+Each non-comment line contains one manually excluded finding ID.
+Subsequent scans omit matching duplicate and complexity findings from all reports.
+Remove an ID from `.aposlopignore` to report that finding again.
+
+Keep `.aposlopignore` local and add it to `.gitignore`.
+
 ## Cache
 
 Aposlop stores versioned analysis data in `<PATH>/.aposlop_cache`.
@@ -136,10 +154,17 @@ Keep `.aposlop_cache` ignored.
 
 ## Output formats
 
-Terminal output contains duplicate, complexity, diagnostic, and summary sections.
+Terminal output contains structured duplicate, complexity, diagnostic, and summary sections.
+Duplicate locations use `path:line` anchors and show their complete line ranges.
+Use `--terminal-output code` to print both source ranges with line numbers.
+
 JSON output contains `schema_version`, `summary`, `duplicates`, `complexity`, and `diagnostics`.
+Each JSON duplicate and complexity violation includes the same ID used by `aposlop allow`.
 Aposlop sorts the shared report data before either output format writes it.
 JSON output ends with one newline.
+
+CI output contains only duplicate and complexity counts.
+`--format ci` returns exit code `1` when either count is nonzero.
 
 Reports use paths relative to the target directory.
 Partial syntax errors produce diagnostics while valid sibling blocks continue through analysis.
@@ -148,6 +173,6 @@ Partial syntax errors produce diagnostics while valid sibling blocks continue th
 
 | Code | Meaning |
 | --- | --- |
-| `0` | Aposlop completed analysis and output without treating findings as failures. |
-| `1` | Configuration, traversal, cache, analysis, or output failed. |
+| `0` | Aposlop completed successfully, and CI output found no reportable findings. |
+| `1` | Aposlop failed operationally, or CI output found duplicates or complexity violations. |
 | `2` | Command-line usage was invalid. |

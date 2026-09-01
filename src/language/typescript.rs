@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tree_sitter::Language;
 
 use super::{LanguageId, LanguageSupport};
@@ -23,8 +25,17 @@ impl LanguageSupport for TypeScriptSupport {
         }
     }
 
-    fn normalization_query(&self) -> &'static str {
-        include_str!("../queries/typescript/normalize.scm")
+    fn normalization_query(&self, extension: &str) -> Cow<'static, str> {
+        const BASE: &str = include_str!("../queries/typescript/normalize.scm");
+        if extension != "tsx" {
+            return Cow::Borrowed(BASE);
+        }
+        const TSX: &str = include_str!("../queries/typescript/normalize_tsx.scm");
+        let mut query = String::with_capacity(BASE.len() + TSX.len() + 1);
+        query.push_str(BASE);
+        query.push('\n');
+        query.push_str(TSX);
+        Cow::Owned(query)
     }
 
     fn metrics_query(&self) -> &'static str {

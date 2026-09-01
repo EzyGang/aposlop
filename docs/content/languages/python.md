@@ -1,6 +1,7 @@
 # Python support
 
 Aposlop analyzes `.py` files.
+Aposlop accepts Python 3.14 unparenthesized multi-exception handlers from [PEP 758](https://peps.python.org/pep-0758/).
 
 ## Blocks
 
@@ -27,6 +28,7 @@ Aposlop anonymizes:
 - Aposlop anonymizes `True`.
 - Aposlop anonymizes `False`.
 - Aposlop anonymizes `None`.
+- Aposlop anonymizes `...`.
 
 Comments do not enter the canonical stream.
 
@@ -38,7 +40,10 @@ Aposlop counts these decisions:
 - Aposlop counts `elif` clauses.
 - Aposlop counts `for` statements.
 - Aposlop counts `while` statements.
+- Aposlop counts assertions.
+- Aposlop counts comprehension generators and filters.
 - Aposlop counts `case` clauses.
+- Aposlop counts guarded `case` clauses.
 - Aposlop counts `except` clauses.
 - Aposlop counts conditional expressions.
 - Aposlop counts Boolean operators.

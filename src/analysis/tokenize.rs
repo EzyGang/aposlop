@@ -72,7 +72,7 @@ pub(super) fn build_block(
         exact,
         normalized,
         shingles,
-        complexity: complexity(provider, block, source),
+        complexity: complexity(provider, block, source, &ranges.blocks),
     }
 }
 

@@ -5,5 +5,6 @@ mod configuration;
 mod detection;
 mod ingest;
 mod language;
+mod language_features;
 mod main;
 mod report;

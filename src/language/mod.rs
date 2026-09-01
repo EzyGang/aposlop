@@ -2,6 +2,7 @@ mod python;
 mod rust;
 mod typescript;
 
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -31,7 +32,7 @@ pub(crate) trait LanguageSupport: Sync {
     fn id(&self) -> LanguageId;
     fn extensions(&self) -> &'static [&'static str];
     fn grammar(&self, extension: &str) -> Option<Language>;
-    fn normalization_query(&self) -> &'static str;
+    fn normalization_query(&self, extension: &str) -> Cow<'static, str>;
     fn metrics_query(&self) -> &'static str;
 }
 
@@ -90,9 +91,10 @@ impl LanguageRegistry {
                         language: provider.id().key(),
                         extension,
                     })?;
+                let normalization_source = provider.normalization_query(extension);
                 let normalization = compile_query(
                     &grammar,
-                    provider.normalization_query(),
+                    &normalization_source,
                     extension,
                     "normalization",
                     NORMALIZATION_CAPTURES,

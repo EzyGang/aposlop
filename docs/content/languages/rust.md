@@ -4,13 +4,13 @@ Aposlop analyzes `.rs` files.
 
 ## Blocks
 
-Aposlop reports free functions and methods as independent blocks.
+Aposlop reports free functions, methods, and closures as independent blocks.
 
 ## Type-2 normalization
 
 Aposlop anonymizes these Rust values:
 
-- Aposlop anonymizes identifiers.
+- Aposlop anonymizes value, field, shorthand-field, and type identifiers.
 - Aposlop anonymizes integer literals.
 - Aposlop anonymizes floating-point literals.
 - Aposlop anonymizes string literals.
@@ -29,10 +29,12 @@ Aposlop counts these decisions:
 - Aposlop counts `for` expressions.
 - Aposlop counts `loop` expressions.
 - Aposlop counts match arms.
+- Aposlop counts `?` expressions.
 - Aposlop counts `&&` operations.
+- Aposlop counts `&&` operations in let-chains.
 - Aposlop counts `||` operations.
 
-Every valid function starts with complexity `1`.
+Every valid function or closure starts with complexity `1`.
 
 ## Configuration
 

@@ -13,6 +13,8 @@ The score is:
 
 Aposlop deduplicates captures by syntax-node byte range.
 This prevents overlapping query patterns from counting one decision twice.
+A nested function, closure, lambda, field initializer, or static block has an independent score.
+Its decisions do not increase the enclosing block's score.
 
 Aposlop counts these language-specific decisions:
 

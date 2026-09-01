@@ -5,13 +5,20 @@
   (function_expression)
   (generator_function)
   (arrow_function)
+  (class_static_block)
 ] @block
+
+(public_field_definition
+  value: (_) @block)
 
 [
   (identifier)
+  (private_property_identifier)
   (property_identifier)
   (shorthand_property_identifier)
   (shorthand_property_identifier_pattern)
+  (statement_identifier)
+  (type_identifier)
 ] @anonymize.identifier
 
 [

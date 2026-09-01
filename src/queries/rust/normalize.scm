@@ -1,6 +1,14 @@
-(function_item) @block
+[
+  (function_item)
+  (closure_expression)
+] @block
 
-(identifier) @anonymize.identifier
+[
+  (identifier)
+  (field_identifier)
+  (shorthand_field_identifier)
+  (type_identifier)
+] @anonymize.identifier
 
 [
   (integer_literal)

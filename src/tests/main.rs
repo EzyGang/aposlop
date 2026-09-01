@@ -4,7 +4,7 @@ use std::io;
 use clap::Parser;
 use tempfile::TempDir;
 
-use crate::{Cli, run};
+use crate::{Cli, CommandStatus, run};
 type TestResult = anyhow::Result<()>;
 
 #[test]
@@ -72,6 +72,136 @@ fn cli_overrides_change_pipeline_rules() -> TestResult {
 }
 
 #[test]
+fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join(".aposlop.toml"),
+        "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = false\n[metrics]\ncomplexity_threshold = 1",
+    )?;
+    for path in ["left.rs", "right.rs"] {
+        fs::write(
+            fixture.path().join(path),
+            "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+        )?;
+    }
+    let target = fixture.path().to_string_lossy().into_owned();
+    let scan = ["aposlop", target.as_str(), "--format", "json"];
+    let mut initial = Vec::new();
+    run(Cli::try_parse_from(scan)?, &mut initial)?;
+    let report: serde_json::Value = serde_json::from_slice(&initial)?;
+    let finding = report["duplicates"][0]["id"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("report did not contain a duplicate ID"))?
+        .to_owned();
+    let complexity_ids: Vec<_> = report["complexity"]
+        .as_array()
+        .ok_or_else(|| anyhow::anyhow!("report did not contain complexity findings"))?
+        .iter()
+        .map(|finding| {
+            finding["id"]
+                .as_str()
+                .map(str::to_owned)
+                .ok_or_else(|| anyhow::anyhow!("complexity finding did not contain an ID"))
+        })
+        .collect::<Result<_, _>>()?;
+    assert_eq!(complexity_ids.len(), 2);
+
+    let mut command_output = Vec::new();
+    run(
+        Cli::try_parse_from(["aposlop", "allow", finding.as_str(), target.as_str()])?,
+        &mut command_output,
+    )?;
+
+    let allow_list = fs::read_to_string(fixture.path().join(".aposlopignore"))?;
+    assert!(allow_list.contains(&finding));
+    let mut suppressed = Vec::new();
+    run(Cli::try_parse_from(scan)?, &mut suppressed)?;
+    let report: serde_json::Value = serde_json::from_slice(&suppressed)?;
+    assert_eq!(report["summary"]["duplicate_count"], 0);
+    assert_eq!(report["summary"]["complexity_violation_count"], 2);
+
+    for complexity_id in &complexity_ids {
+        run(
+            Cli::try_parse_from(["aposlop", "allow", complexity_id.as_str(), target.as_str()])?,
+            &mut command_output,
+        )?;
+    }
+    let mut fully_suppressed = Vec::new();
+    run(Cli::try_parse_from(scan)?, &mut fully_suppressed)?;
+    let report: serde_json::Value = serde_json::from_slice(&fully_suppressed)?;
+    assert_eq!(report["summary"]["duplicate_count"], 0);
+    assert_eq!(report["summary"]["complexity_violation_count"], 0);
+
+    fs::write(
+        fixture.path().join(".aposlopignore"),
+        "# Manually excluded Aposlop findings.\n",
+    )?;
+    let mut restored = Vec::new();
+    run(Cli::try_parse_from(scan)?, &mut restored)?;
+    let report: serde_json::Value = serde_json::from_slice(&restored)?;
+    assert_eq!(report["summary"]["duplicate_count"], 1);
+    assert_eq!(report["summary"]["complexity_violation_count"], 2);
+    Ok(())
+}
+
+#[test]
+fn ci_output_returns_finding_and_success_statuses() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join(".aposlop.toml"),
+        "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = false\n[metrics]\ncalculate_complexity = false",
+    )?;
+    for path in ["left.rs", "right.rs"] {
+        fs::write(
+            fixture.path().join(path),
+            "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+        )?;
+    }
+    let target = fixture.path().to_string_lossy().into_owned();
+    let arguments = ["aposlop", target.as_str(), "--format", "ci"];
+    let mut failing = Vec::new();
+
+    let status = run(Cli::try_parse_from(arguments)?, &mut failing)?;
+
+    assert_eq!(status, CommandStatus::Findings);
+    assert_eq!(
+        String::from_utf8(failing)?,
+        "Aposlop CI: failed\nDuplicate findings: 1\nComplexity violations: 0\n"
+    );
+
+    fs::remove_file(fixture.path().join("right.rs"))?;
+    let mut passing = Vec::new();
+    let status = run(Cli::try_parse_from(arguments)?, &mut passing)?;
+    assert_eq!(status, CommandStatus::Success);
+    assert_eq!(
+        String::from_utf8(passing)?,
+        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
+    );
+    Ok(())
+}
+
+#[test]
+fn malformed_allow_list_is_an_actionable_failure() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(fixture.path().join(".aposlopignore"), "not-a-finding\n")?;
+    let target = fixture.path().to_string_lossy().into_owned();
+    let mut output = Vec::new();
+
+    let error = match run(
+        Cli::try_parse_from(["aposlop", target.as_str()])?,
+        &mut output,
+    ) {
+        Err(error) => error,
+        Ok(_) => anyhow::bail!("malformed allow list was accepted"),
+    };
+
+    let message = format!("{error:#}");
+    assert!(message.contains("failed to load allow list"));
+    assert!(message.contains(".aposlopignore at line 1"));
+    Ok(())
+}
+
+#[test]
 fn usage_and_operational_failures_are_actionable() -> TestResult {
     let usage = match Cli::try_parse_from(["aposlop", "--format", "xml"]) {
         Err(error) => error,
@@ -89,7 +219,7 @@ fn usage_and_operational_failures_are_actionable() -> TestResult {
         &mut output,
     ) {
         Err(error) => error,
-        Ok(()) => anyhow::bail!("file target was accepted"),
+        Ok(_) => anyhow::bail!("file target was accepted"),
     };
     assert!(error.to_string().contains("is not a directory"));
     Ok(())
@@ -105,7 +235,7 @@ fn output_failures_are_fatal_and_contextual() -> TestResult {
         &mut writer,
     ) {
         Err(error) => error,
-        Ok(()) => anyhow::bail!("output failure was ignored"),
+        Ok(_) => anyhow::bail!("output failure was ignored"),
     };
 
     assert!(error.to_string().contains("failed to render report"));

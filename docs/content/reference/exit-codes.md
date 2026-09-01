@@ -1,24 +1,30 @@
 # Exit codes
 
-Aposlop separates findings from command failures.
-Duplicate and complexity findings do not make a successful analysis fail.
+Aposlop separates operational failures from reportable findings.
+Terminal and JSON output do not fail because findings exist.
+CI output fails when duplicates or complexity violations exist.
 
 | Code | Meaning |
 | ---: | --- |
-| `0` | Aposlop completed analysis and output with any findings or recoverable diagnostics. |
-| `1` | Aposlop encountered a configuration, traversal, cache, analysis, or output failure. |
+| `0` | Aposlop completed successfully, and CI output found no reportable findings. |
+| `1` | Aposlop failed operationally, or CI output found duplicates or complexity violations. |
 | `2` | Aposlop rejected invalid command-line usage. |
 
 ## Automation
 
-Use exit status to detect whether Aposlop completed.
-Read terminal or JSON report data to enforce project-specific duplicate and complexity policies.
+Use CI output when findings must fail an automated check:
 
-The following command writes a JSON report:
+```bash
+aposlop . --format ci
+```
+
+The command prints only its status, duplicate count, and complexity violation count.
+It returns exit code `1` when either count is nonzero.
+
+Use JSON output when automation needs complete report data:
 
 ```bash
 aposlop . --format json > aposlop-report.json
 ```
 
-A zero exit status means `aposlop-report.json` contains a complete report.
-It does not mean the duplicate and complexity arrays are empty.
+JSON output returns exit code `0` after successful analysis even when findings exist.

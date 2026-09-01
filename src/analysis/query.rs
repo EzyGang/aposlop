@@ -7,6 +7,7 @@ use crate::language::CompiledLanguage;
 
 #[derive(Default)]
 pub(super) struct CaptureRanges {
+    pub(super) blocks: Vec<Range<usize>>,
     pub(super) ignored: Vec<Range<usize>>,
     pub(super) identifiers: Vec<Range<usize>>,
     pub(super) literals: Vec<Range<usize>>,
@@ -52,6 +53,7 @@ pub(super) fn capture_ranges(
                 "ignore" => ranges.ignored.push(range),
                 "anonymize.identifier" => ranges.identifiers.push(range),
                 "anonymize.literal" => ranges.literals.push(range),
+                "block" => ranges.blocks.push(range),
                 _ => (),
             }
         }
@@ -60,14 +62,26 @@ pub(super) fn capture_ranges(
     ranges
 }
 
-pub(super) fn complexity(provider: &CompiledLanguage, block: Node<'_>, source: &[u8]) -> usize {
+pub(super) fn complexity(
+    provider: &CompiledLanguage,
+    block: Node<'_>,
+    source: &[u8],
+    blocks: &[Range<usize>],
+) -> usize {
+    let block_range = block.byte_range();
     let mut captures = BTreeSet::new();
     let mut cursor = QueryCursor::new();
     let mut matches = cursor.matches(&provider.metrics, block, source);
 
     while let Some(query_match) = matches.next() {
         for capture in query_match.captures {
-            captures.insert((capture.node.start_byte(), capture.node.end_byte()));
+            let range = capture.node.byte_range();
+            if blocks.iter().any(|nested| {
+                *nested != block_range && nested.start <= range.start && nested.end >= range.end
+            }) {
+                continue;
+            }
+            captures.insert((range.start, range.end));
         }
     }
 

@@ -17,10 +17,12 @@ Aposlop reports:
 - Aposlop reports function expressions.
 - Aposlop reports generator functions.
 - Aposlop reports arrow functions.
+- Aposlop reports class static blocks.
+- Aposlop reports class field initializer expressions.
 
 ## Type-2 normalization
 
-Aposlop anonymizes identifiers, property identifiers, shorthand identifiers, and shorthand binding identifiers.
+Aposlop anonymizes value, property, private-property, shorthand, binding, label, and type identifiers.
 
 It also anonymizes:
 
@@ -31,6 +33,7 @@ It also anonymizes:
 - Aposlop anonymizes `true`.
 - Aposlop anonymizes `false`.
 - Aposlop anonymizes `null`.
+- Aposlop anonymizes TSX text and character references.
 
 Comments do not enter the canonical stream.
 
@@ -46,9 +49,15 @@ Aposlop counts these decisions:
 - Aposlop counts switch cases.
 - Aposlop counts catch clauses.
 - Aposlop counts ternary expressions.
+- Aposlop counts default parameters and destructuring defaults.
+- Aposlop counts optional-chain operations.
 - Aposlop counts `&&` operations.
 - Aposlop counts `||` operations.
 - Aposlop counts `??` operations.
+- Aposlop counts `&&=`, `||=`, and `??=` logical assignments.
+
+Nested function-like blocks have independent complexity scores.
+Class field initializers and static blocks also have independent scores.
 
 ## Configuration
 

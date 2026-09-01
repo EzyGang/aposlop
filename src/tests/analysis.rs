@@ -158,7 +158,7 @@ fn repeated_analysis_is_identical() -> TestResult {
     Ok(())
 }
 
-fn analyze_fixture(fixture: &TempDir) -> TestResult<Vec<AnalyzedFile>> {
+pub(super) fn analyze_fixture(fixture: &TempDir) -> TestResult<Vec<AnalyzedFile>> {
     let config = load_config("[core]\nexclude = []")?;
     let registry = LanguageRegistry::compile()?;
     let discovery = discover(fixture.path(), &config, &registry)?;

@@ -1,17 +1,18 @@
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 use thiserror::Error;
 
-use crate::OutputFormat;
+use crate::allow_list::AllowList;
 use crate::analysis::{AnalysisDiagnosticKind, AnalyzedFile, SourceLocation};
 use crate::cache::CacheDiagnostic;
 use crate::config::Config;
-use crate::detection::CloneMatch;
+use crate::detection::{CloneMatch, FindingId};
 use crate::ingest::IngestDiagnostic;
+use crate::{OutputFormat, TerminalOutput};
 
-pub(crate) const REPORT_SCHEMA_VERSION: u32 = 1;
+pub(crate) const REPORT_SCHEMA_VERSION: u32 = 3;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub(crate) struct Report {
@@ -20,6 +21,12 @@ pub(crate) struct Report {
     pub(crate) duplicates: Vec<CloneMatch>,
     pub(crate) complexity: Vec<ComplexityViolation>,
     pub(crate) diagnostics: Vec<Diagnostic>,
+}
+impl Report {
+    #[must_use]
+    pub(crate) fn has_findings(&self) -> bool {
+        self.summary.duplicate_count > 0 || self.summary.complexity_violation_count > 0
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -32,6 +39,7 @@ pub(crate) struct Summary {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub(crate) struct ComplexityViolation {
+    pub(crate) id: FindingId,
     pub(crate) location: SourceLocation,
     pub(crate) score: usize,
     pub(crate) threshold: usize,
@@ -52,12 +60,26 @@ pub(crate) enum DiagnosticCategory {
     Ingestion,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct RenderOptions<'a> {
+    pub(crate) format: OutputFormat,
+    pub(crate) terminal_output: TerminalOutput,
+    pub(crate) root: &'a Path,
+    pub(crate) color: bool,
+}
+
 #[derive(Debug, Error)]
 pub(crate) enum ReportError {
     #[error("failed to write report: {0}")]
     Io(#[from] std::io::Error),
     #[error("failed to encode JSON report: {0}")]
     Json(#[from] serde_json::Error),
+    #[error("failed to read source file {path}: {source}")]
+    Source {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
 }
 
 #[must_use]
@@ -65,14 +87,16 @@ pub(crate) fn build(
     files: &[AnalyzedFile],
     mut duplicates: Vec<CloneMatch>,
     config: &Config,
+    allow_list: &AllowList,
     ingestion: Vec<IngestDiagnostic>,
     cache: Vec<CacheDiagnostic>,
 ) -> Report {
+    duplicates.retain(|finding| !allow_list.contains(finding.id));
     duplicates.sort_unstable_by(|left, right| {
-        left.kind
-            .cmp(&right.kind)
-            .then(left.left.cmp(&right.left))
+        left.left
+            .cmp(&right.left)
             .then(left.right.cmp(&right.right))
+            .then(left.kind.cmp(&right.kind))
     });
     let mut complexity = Vec::new();
     let mut diagnostics = Vec::new();
@@ -81,7 +105,12 @@ pub(crate) fn build(
         if rules.calculate_complexity {
             for block in &file.blocks {
                 if block.complexity > rules.complexity_threshold {
+                    let id = FindingId::for_complexity_location(&block.location);
+                    if allow_list.contains(id) {
+                        continue;
+                    }
                     complexity.push(ComplexityViolation {
+                        id,
                         location: block.location.clone(),
                         score: block.complexity,
                         threshold: rules.complexity_threshold,
@@ -147,84 +176,34 @@ pub(crate) fn build(
 pub(crate) fn render(
     writer: &mut impl Write,
     report: &Report,
-    format: OutputFormat,
+    options: RenderOptions<'_>,
 ) -> Result<(), ReportError> {
-    match format {
-        OutputFormat::Terminal => render_terminal(writer, report)?,
+    match options.format {
+        OutputFormat::Terminal => crate::report_terminal::render(writer, report, options)?,
         OutputFormat::Json => {
             serde_json::to_writer_pretty(&mut *writer, report)?;
             writeln!(writer)?;
         }
+        OutputFormat::Ci => render_ci(writer, report)?,
     }
     Ok(())
 }
 
-fn render_terminal(writer: &mut impl Write, report: &Report) -> std::io::Result<()> {
-    writeln!(writer, "Aposlop report")?;
-    writeln!(writer, "\nDuplicates")?;
-    if report.duplicates.is_empty() {
-        writeln!(writer, "None")?;
+fn render_ci(writer: &mut impl Write, report: &Report) -> std::io::Result<()> {
+    let status = if report.has_findings() {
+        "failed"
     } else {
-        writeln!(writer, "TYPE\tSIMILARITY\tLEFT\tRIGHT")?;
-        for item in &report.duplicates {
-            writeln!(
-                writer,
-                "{:?}\t{:.3}\t{}:{}-{}\t{}:{}-{}",
-                item.kind,
-                item.similarity,
-                item.left.path.display(),
-                item.left.start_line,
-                item.left.end_line,
-                item.right.path.display(),
-                item.right.start_line,
-                item.right.end_line
-            )?;
-        }
-    }
-    writeln!(writer, "\nComplexity")?;
-    if report.complexity.is_empty() {
-        writeln!(writer, "None")?;
-    } else {
-        writeln!(writer, "SCORE\tTHRESHOLD\tLOCATION")?;
-        for item in &report.complexity {
-            writeln!(
-                writer,
-                "{}\t{}\t{}:{}-{}",
-                item.score,
-                item.threshold,
-                item.location.path.display(),
-                item.location.start_line,
-                item.location.end_line
-            )?;
-        }
-    }
-    writeln!(writer, "\nDiagnostics")?;
-    if report.diagnostics.is_empty() {
-        writeln!(writer, "None")?;
-    } else {
-        writeln!(writer, "CATEGORY\tPATH\tMESSAGE")?;
-        for item in &report.diagnostics {
-            writeln!(
-                writer,
-                "{:?}\t{}\t{}",
-                item.category,
-                item.path.display(),
-                item.message
-            )?;
-        }
-    }
-    writeln!(writer, "\nSummary")?;
-    writeln!(writer, "Scanned files: {}", report.summary.scanned_files)?;
+        "passed"
+    };
+    writeln!(writer, "Aposlop CI: {status}")?;
     writeln!(
         writer,
-        "Analyzed blocks: {}",
-        report.summary.analyzed_blocks
+        "Duplicate findings: {}",
+        report.summary.duplicate_count
     )?;
-    writeln!(writer, "Duplicates: {}", report.summary.duplicate_count)?;
     writeln!(
         writer,
         "Complexity violations: {}",
         report.summary.complexity_violation_count
-    )?;
-    Ok(())
+    )
 }

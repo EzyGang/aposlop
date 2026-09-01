@@ -60,7 +60,8 @@ docs/_build/
 # PyBuilder
 target/
 
-# Aposlop analysis cache
+# Aposlop local state
+.aposlopignore
 .aposlop_cache
 
 # pyenv

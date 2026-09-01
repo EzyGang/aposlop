@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use tree_sitter::Language;
 
 use super::{LanguageId, LanguageSupport};
@@ -19,8 +21,8 @@ impl LanguageSupport for PythonSupport {
         (extension == "py").then(|| tree_sitter_python::LANGUAGE.into())
     }
 
-    fn normalization_query(&self) -> &'static str {
-        include_str!("../queries/python/normalize.scm")
+    fn normalization_query(&self, _extension: &str) -> Cow<'static, str> {
+        Cow::Borrowed(include_str!("../queries/python/normalize.scm"))
     }
 
     fn metrics_query(&self) -> &'static str {

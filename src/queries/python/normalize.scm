@@ -24,6 +24,7 @@
   (true)
   (false)
   (none)
+  (ellipsis)
 ] @anonymize.literal
 
 (comment) @ignore
