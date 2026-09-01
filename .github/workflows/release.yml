@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v[0-9]*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to publish. Leave empty to create one from Cargo.toml.
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -16,7 +22,43 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  create-tag:
+    name: Create release tag from Cargo version
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag == ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Create tag and start signed release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Cargo package version must match MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          tag="v${version}"
+          git fetch --force --tags origin
+          if git show-ref --verify --quiet "refs/tags/${tag}"; then
+            echo "release tag already exists: ${tag}" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag --annotate "$tag" --message "Aposlop ${version}"
+          git push origin "refs/tags/${tag}"
+          gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref "$tag" -f "release_tag=${tag}"
+
   prepare:
+    if: github.event_name == 'push' || inputs.release_tag != ''
     name: Validate release version
     runs-on: ubuntu-latest
     outputs:
@@ -27,9 +69,15 @@ jobs:
       - name: Validate tag and Cargo version
         id: version
         shell: bash
+        env:
+          REQUESTED_TAG: ${{ inputs.release_tag }}
         run: |
           if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "release tag must match vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          if [[ -n "$REQUESTED_TAG" && "$REQUESTED_TAG" != "$GITHUB_REF_NAME" ]]; then
+            echo "requested tag $REQUESTED_TAG does not match ref $GITHUB_REF_NAME" >&2
             exit 1
           fi
           version="${GITHUB_REF_NAME#v}"
