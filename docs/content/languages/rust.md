@@ -8,29 +8,29 @@ Aposlop reports free functions and methods as independent blocks.
 
 ## Type-2 normalization
 
-The provider anonymizes:
+Aposlop anonymizes these Rust values:
 
-- identifiers
-- integer literals
-- floating-point literals
-- string literals
-- raw string literals
-- character literals
-- Boolean literals
+- Aposlop anonymizes identifiers.
+- Aposlop anonymizes integer literals.
+- Aposlop anonymizes floating-point literals.
+- Aposlop anonymizes string literals.
+- Aposlop anonymizes raw string literals.
+- Aposlop anonymizes character literals.
+- Aposlop anonymizes Boolean literals.
 
-Line comments and block comments do not enter canonical token streams.
+Line comments and block comments do not enter the canonical stream.
 
 ## Complexity decisions
 
 Aposlop counts these decisions:
 
-- `if` expressions
-- `while` expressions
-- `for` expressions
-- `loop` expressions
-- match arms
-- `&&` operations
-- `||` operations
+- Aposlop counts `if` expressions.
+- Aposlop counts `while` expressions.
+- Aposlop counts `for` expressions.
+- Aposlop counts `loop` expressions.
+- Aposlop counts match arms.
+- Aposlop counts `&&` operations.
+- Aposlop counts `||` operations.
 
 Every valid function starts with complexity `1`.
 

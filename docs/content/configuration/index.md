@@ -1,7 +1,7 @@
 # Configuration
 
-Aposlop loads `<PATH>/.aposlop.toml` when the file exists.
-A missing file uses built-in defaults.
+Aposlop loads `<target-directory>/.aposlop.toml` when the file exists.
+Aposlop uses built-in defaults when the file does not exist.
 
 ## Complete global configuration
 
@@ -28,8 +28,8 @@ A configuration failure stops analysis and returns exit code `1`.
 
 ## Language overrides
 
-Supported language keys are `rust`, `python`, and `typescript`.
-A TypeScript language table applies to `.ts` and `.tsx` files.
+Aposlop supports the `rust`, `python`, and `typescript` language keys.
+The `typescript` language table applies to `.ts` and `.tsx` files.
 
 ```toml
 [languages.rust]
@@ -42,7 +42,7 @@ complexity_threshold = 20
 
 ## Extension overrides
 
-Supported extension keys are `rs`, `py`, `ts`, and `tsx`.
+Aposlop supports the `rs`, `py`, `ts`, and `tsx` extension keys.
 Do not include a leading dot.
 
 ```toml
@@ -54,14 +54,14 @@ type_3_threshold = 0.90
 
 Extension tables can set these fields:
 
-- `min_lines`
-- `min_nodes`
-- `type_1`
-- `type_2`
-- `type_3`
-- `type_3_threshold`
-- `calculate_complexity`
-- `complexity_threshold`
+- `min_lines` sets the minimum line count.
+- `min_nodes` sets the minimum named-node count.
+- `type_1` enables Type-1 duplicate matches.
+- `type_2` enables Type-2 duplicate matches.
+- `type_3` enables Type-3 duplicate matches.
+- `type_3_threshold` sets the Type-3 Jaccard threshold.
+- `calculate_complexity` enables complexity violations.
+- `complexity_threshold` sets the complexity threshold.
 
 `exclude` and `use_cache` are global-only fields.
 

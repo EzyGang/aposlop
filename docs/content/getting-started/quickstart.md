@@ -55,10 +55,10 @@ An omitted option preserves the resolved configuration-file value.
 
 The report contains four ordered sections:
 
-1. Duplicate matches
-2. Complexity violations
-3. File and cache diagnostics
-4. Summary counts
+1. The first section lists duplicate matches.
+2. The second section lists complexity violations.
+3. The third section lists file and cache diagnostics.
+4. The fourth section lists summary counts.
 
 Findings keep exit code `0`.
 Use the report data rather than the process status to enforce project-specific thresholds.

@@ -131,13 +131,6 @@ impl Config {
         Self::from_file(parsed)
     }
 
-    #[cfg(test)]
-    pub(crate) fn parse(text: &str) -> Result<Self, ConfigError> {
-        let path = PathBuf::from(".aposlop.toml");
-        let parsed = toml::from_str(text).map_err(|source| ConfigError::Parse { path, source })?;
-        Self::from_file(parsed)
-    }
-
     pub(crate) fn apply_cli(mut self, cli: CliOverrides) -> Result<Self, ConfigError> {
         cli.rules.validate()?;
         if let Some(excludes) = &cli.exclude {

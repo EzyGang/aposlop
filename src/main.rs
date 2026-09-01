@@ -49,7 +49,7 @@ struct Cli {
     #[arg(long, value_name = "N")]
     min_nodes: Option<usize>,
 
-    /// Replace configured root-relative exclusions.
+    /// Replace configured exclusions relative to the target directory.
     #[arg(long, value_name = "PATH")]
     exclude: Vec<PathBuf>,
 
@@ -57,15 +57,15 @@ struct Cli {
     #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
     use_cache: Option<bool>,
 
-    /// Enable or disable Type-1 clone reporting.
+    /// Enable or disable Type-1 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
     type_1: Option<bool>,
 
-    /// Enable or disable Type-2 clone reporting.
+    /// Enable or disable Type-2 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
     type_2: Option<bool>,
 
-    /// Enable or disable Type-3 clone reporting.
+    /// Enable or disable Type-3 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set)]
     type_3: Option<bool>,
 

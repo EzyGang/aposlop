@@ -1,13 +1,13 @@
 # JSON report reference
 
 Select JSON with `--format json`.
-The document ends with one newline.
+JSON output ends with one newline.
 
 ## Top-level fields
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | Report schema version. The current value is `1`. |
+| `schema_version` | The report schema version is `1`. |
 | `summary` | Aggregate file, block, duplicate, and complexity counts. |
 | `duplicates` | Sorted duplicate matches. |
 | `complexity` | Sorted complexity violations. |
@@ -15,30 +15,30 @@ The document ends with one newline.
 
 ## Duplicate fields
 
-Each duplicate contains:
+Each duplicate match contains these fields:
 
-- `kind`: `type_1`, `type_2`, or `type_3`
-- `similarity`: exact or verified Jaccard similarity
-- `left`: first source location
-- `right`: second source location
+- `kind` contains `type_1`, `type_2`, or `type_3`.
+- `similarity` contains exact or verified Jaccard similarity.
+- `left` contains the first source location.
+- `right` contains the second source location.
 
-Each location contains a root-relative `path`, one-based `start_line`, and one-based `end_line`.
+Each location contains a path relative to the target directory and one-based line numbers.
 
 ## Complexity fields
 
-Each violation contains:
+Each complexity violation contains these fields:
 
-- `location`: root-relative source location
-- `score`: calculated cyclomatic complexity
-- `threshold`: effective threshold for that block
+- `location` contains the source location.
+- `score` contains calculated cyclomatic complexity.
+- `threshold` contains the effective threshold for that block.
 
 ## Diagnostic fields
 
-Each diagnostic contains:
+Each diagnostic contains these fields:
 
-- `path`: root-relative source or cache path
-- `category`: `analysis`, `cache`, or `ingestion`
-- `message`: deterministic diagnostic text
+- `path` contains a source path or cache path relative to the target directory.
+- `category` contains `analysis`, `cache`, or `ingestion`.
+- `message` contains deterministic diagnostic text.
 
 ## Example
 

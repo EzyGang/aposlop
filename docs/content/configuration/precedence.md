@@ -1,20 +1,20 @@
 # Configuration precedence
 
-Aposlop resolves every scalar rule independently.
-One field can come from a language table while another comes from the global section.
+Aposlop resolves every configuration field independently.
+A language table can supply one field while the global section supplies another field.
 
 ## Resolution order
 
-The layers apply in this order:
+Aposlop applies configuration layers in this order:
 
-1. Built-in default
-2. Global `.aposlop.toml` value
-3. Matching language table
-4. Matching extension table
-5. Command-line override
+1. Aposlop starts with the built-in default.
+2. Aposlop applies the global `.aposlop.toml` value.
+3. Aposlop applies the matching language table.
+4. Aposlop applies the matching extension table.
+5. Aposlop applies the command-line option.
 
 A later layer wins over an earlier layer.
-An omitted command-line field preserves the fully resolved configuration-file value.
+An omitted command-line option preserves the fully resolved configuration-file value.
 
 ## Example
 
@@ -54,6 +54,6 @@ aposlop . --type-2 false --calculate-complexity false
 
 ## Replacement lists
 
-Configured `core.exclude` replaces the built-in list.
+A `core.exclude` value replaces the built-in list.
 One or more `--exclude` options replace the configured list.
 Aposlop does not merge exclusion lists across layers.

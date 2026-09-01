@@ -29,13 +29,13 @@ Aposlop deserializes `.aposlop.toml` into typed sections and rejects unknown fie
 
 ## `[languages.<name>]`
 
-Supported names:
+Aposlop supports these language names:
 
-- `rust`
-- `python`
-- `typescript`
+- Use `rust` for Rust files.
+- Use `python` for Python files.
+- Use `typescript` for TypeScript and TSX files.
 
-Each language table accepts these optional scalar fields:
+Each language table accepts these optional fields:
 
 | Field | Type |
 | --- | --- |

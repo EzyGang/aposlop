@@ -2,13 +2,15 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::config::{CliOverrides, Config, ConfigError, RuleOverride};
+use crate::config::{CliOverrides, ConfigError, RuleOverride};
 use crate::{Cli, OutputFormat};
+
+use super::configuration::load_config;
 type TestResult = anyhow::Result<()>;
 
 #[test]
 fn defaults_match_the_v1_contract() -> TestResult {
-    let config = Config::parse("")?;
+    let config = load_config("")?;
     let rules = config.rules("rust", "rs");
 
     assert_eq!(rules.min_lines, 5);
@@ -26,25 +28,25 @@ fn defaults_match_the_v1_contract() -> TestResult {
 
 #[test]
 fn rules_resolve_global_language_extension_then_cli() -> TestResult {
-    let config = Config::parse(
+    let config = load_config(
         r#"
-[core]
-min_lines = 4
-min_nodes = 8
-[duplicates_detection]
-type_2 = true
-type_3_threshold = 0.70
-[metrics]
-complexity_threshold = 20
-[languages.typescript]
-min_lines = 6
-type_2 = false
-type_3_threshold = 0.80
-[extensions.tsx]
-min_lines = 9
-min_nodes = 12
-type_3_threshold = 0.90
-"#,
+    [core]
+    min_lines = 4
+    min_nodes = 8
+    [duplicates_detection]
+    type_2 = true
+    type_3_threshold = 0.70
+    [metrics]
+    complexity_threshold = 20
+    [languages.typescript]
+    min_lines = 6
+    type_2 = false
+    type_3_threshold = 0.80
+    [extensions.tsx]
+    min_lines = 9
+    min_nodes = 12
+    type_3_threshold = 0.90
+    "#,
     )?
     .apply_cli(CliOverrides {
         rules: RuleOverride {
@@ -67,14 +69,14 @@ type_3_threshold = 0.90
 
 #[test]
 fn explicit_cli_false_and_excludes_replace_file_values() -> TestResult {
-    let config = Config::parse(
+    let config = load_config(
         r#"
-[core]
-exclude = ["generated"]
-use_cache = true
-[duplicates_detection]
-type_1 = true
-"#,
+    [core]
+    exclude = ["generated"]
+    use_cache = true
+    [duplicates_detection]
+    type_1 = true
+    "#,
     )?
     .apply_cli(CliOverrides {
         rules: RuleOverride {
@@ -97,26 +99,26 @@ type_1 = true
 #[test]
 fn rejects_unknown_keys_and_invalid_values() -> TestResult {
     assert!(matches!(
-        Config::parse("[languages.go]\nmin_lines = 2"),
+        load_config("[languages.go]\nmin_lines = 2"),
         Err(ConfigError::UnknownLanguage(_))
     ));
     assert!(matches!(
-        Config::parse("[extensions.jsx]\nmin_lines = 2"),
+        load_config("[extensions.jsx]\nmin_lines = 2"),
         Err(ConfigError::UnsupportedExtension(_))
     ));
     assert!(matches!(
-        Config::parse("[core]\nmin_lines = 0"),
+        load_config("[core]\nmin_lines = 0"),
         Err(ConfigError::ZeroThreshold { .. })
     ));
     assert!(matches!(
-        Config::parse("[duplicates_detection]\ntype_3_threshold = 1.1"),
+        load_config("[duplicates_detection]\ntype_3_threshold = 1.1"),
         Err(ConfigError::Similarity)
     ));
     assert!(matches!(
-        Config::parse("[core]\nexclude = [\"../outside\"]"),
+        load_config("[core]\nexclude = [\"../outside\"]"),
         Err(ConfigError::InvalidExclude(_))
     ));
-    assert!(Config::parse("[core]\nunknown = true").is_err());
+    assert!(load_config("[core]\nunknown = true").is_err());
     Ok(())
 }
 

@@ -26,5 +26,5 @@ cargo build --release
 cargo run --release -- /path/to/project
 ```
 
-The release binary is written under `target/release/`.
+Cargo writes the release binary under `target/release/`.
 

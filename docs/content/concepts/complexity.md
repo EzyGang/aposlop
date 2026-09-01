@@ -1,6 +1,6 @@
 # Cyclomatic complexity
 
-Aposlop calculates complexity for every analyzed block during parsing.
+Aposlop calculates complexity for each block during parsing.
 Reporting configuration does not change cached analysis data.
 
 ## Score
@@ -14,16 +14,16 @@ The score is:
 Aposlop deduplicates captures by syntax-node byte range.
 This prevents overlapping query patterns from counting one decision twice.
 
-Providers capture supported decisions such as:
+Aposlop counts these language-specific decisions:
 
-- branches
-- loop decisions
-- match or case alternatives
-- exception branches
-- conditional expressions
-- short-circuit Boolean operations
+- Aposlop counts branches.
+- Aposlop counts loop decisions.
+- Aposlop counts match or case alternatives.
+- Aposlop counts exception branches.
+- Aposlop counts conditional expressions.
+- Aposlop counts short-circuit Boolean operations.
 
-See each [language page](../languages/index.md) for provider-specific forms.
+See each [language page](../languages/index.md) for language-specific decisions.
 
 ## Violations
 
@@ -42,7 +42,7 @@ This setting does not invalidate existing cache entries.
 Language and extension tables can set independent complexity behavior.
 Command-line values override all configuration-file layers.
 
-For example:
+The following example sets different complexity rules:
 
 ```toml
 [metrics]

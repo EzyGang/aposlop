@@ -3,9 +3,10 @@ use std::path::PathBuf;
 
 use tempfile::TempDir;
 
-use crate::config::Config;
 use crate::ingest::discover;
 use crate::language::{LanguageId, LanguageRegistry};
+
+use super::configuration::load_config;
 type TestResult = anyhow::Result<()>;
 
 #[test]
@@ -25,7 +26,7 @@ fn discovery_respects_ignores_excludes_and_supported_extensions() -> TestResult 
     fs::write(fixture.path().join("generated/skip.rs"), "fn skip() {}\n")?;
     fs::write(fixture.path().join("notes.txt"), "unsupported\n")?;
 
-    let config = Config::parse("[core]\nexclude = [\"generated\"]")?;
+    let config = load_config("[core]\nexclude = [\"generated\"]")?;
     let registry = LanguageRegistry::compile()?;
     let discovery = discover(fixture.path(), &config, &registry)?;
     let paths: Vec<_> = discovery
@@ -51,7 +52,7 @@ fn discovery_order_is_stable_across_runs() -> TestResult {
     for path in ["z.rs", "a.py", "m.tsx", "b.ts"] {
         fs::write(fixture.path().join(path), "fn value() {}\n")?;
     }
-    let config = Config::parse("[core]\nexclude = []")?;
+    let config = load_config("[core]\nexclude = []")?;
     let registry = LanguageRegistry::compile()?;
 
     let first = discover(fixture.path(), &config, &registry)?;

@@ -3,9 +3,10 @@ use std::fs;
 use tempfile::TempDir;
 
 use crate::analysis::{AnalysisDiagnosticKind, AnalyzedFile, analyze};
-use crate::config::Config;
 use crate::ingest::discover;
 use crate::language::LanguageRegistry;
+
+use super::configuration::load_config;
 type TestResult<T = ()> = anyhow::Result<T>;
 
 #[test]
@@ -158,7 +159,7 @@ fn repeated_analysis_is_identical() -> TestResult {
 }
 
 fn analyze_fixture(fixture: &TempDir) -> TestResult<Vec<AnalyzedFile>> {
-    let config = Config::parse("[core]\nexclude = []")?;
+    let config = load_config("[core]\nexclude = []")?;
     let registry = LanguageRegistry::compile()?;
     let discovery = discover(fixture.path(), &config, &registry)?;
     Ok(analyze(discovery.files, &registry)?)

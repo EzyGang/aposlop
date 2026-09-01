@@ -5,17 +5,18 @@ use crate::analysis::{
     AnalysisDiagnostic, AnalysisDiagnosticKind, AnalyzedBlock, AnalyzedFile, SourceLocation,
 };
 use crate::cache::CacheDiagnostic;
-use crate::config::Config;
 use crate::detection::{CloneKind, CloneMatch};
 use crate::ingest::{FileIdentity, IngestDiagnostic};
 use crate::language::LanguageId;
 use crate::report::{DiagnosticCategory, REPORT_SCHEMA_VERSION, build, render};
+
+use super::configuration::load_config;
 type TestResult = anyhow::Result<()>;
 
 #[test]
 fn report_filters_strict_complexity_thresholds_and_sorts_data() -> TestResult {
     let config =
-        Config::parse("[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3")?;
+        load_config("[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3")?;
     let mut file = analyzed_file("source.rs", &[3, 4]);
     file.diagnostics.push(AnalysisDiagnostic {
         path: PathBuf::from("source.rs"),
@@ -59,14 +60,14 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
     let enabled = build(
         std::slice::from_ref(&file),
         Vec::new(),
-        &Config::parse("[metrics]\ncomplexity_threshold = 1")?,
+        &load_config("[metrics]\ncomplexity_threshold = 1")?,
         Vec::new(),
         Vec::new(),
     );
     let disabled = build(
         std::slice::from_ref(&file),
         Vec::new(),
-        &Config::parse("[metrics]\ncalculate_complexity = false")?,
+        &load_config("[metrics]\ncalculate_complexity = false")?,
         Vec::new(),
         Vec::new(),
     );
@@ -79,7 +80,7 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
 
 #[test]
 fn terminal_and_json_render_the_same_report_contract() -> TestResult {
-    let config = Config::parse("[core]\nmin_lines = 1\nmin_nodes = 1")?;
+    let config = load_config("[core]\nmin_lines = 1\nmin_nodes = 1")?;
     let duplicate = CloneMatch {
         kind: CloneKind::Type1,
         similarity: 1.0,

@@ -4,20 +4,20 @@ Aposlop applies ignore rules during traversal before file metadata and parsing w
 
 ## Standard ignore behavior
 
-Traversal uses the `ignore` crate with standard filters enabled.
-Aposlop respects:
+Aposlop enables standard ignore filters.
+Aposlop applies these ignore sources:
 
-- `.gitignore`
-- repository exclude rules
-- global Git ignore rules
-- parent ignore rules
-- hidden-file filtering
+- Aposlop reads `.gitignore`.
+- Aposlop applies repository exclude rules.
+- Aposlop applies global Git ignore rules.
+- Aposlop applies parent ignore rules.
+- Aposlop filters hidden files.
 
-Ignored supported files do not enter analysis or the cache.
+Ignore rules keep matching supported files out of analysis and the cache.
 
 ## Configured exclusions
 
-`core.exclude` contains target-relative paths:
+`core.exclude` contains paths relative to the target directory:
 
 ```toml
 [core]
@@ -27,11 +27,11 @@ exclude = ["fixtures/", "generated/", "third_party/"]
 Directory exclusions skip the complete subtree.
 File exclusions skip the selected path.
 
-Aposlop rejects:
+Aposlop rejects these exclusion paths:
 
-- absolute paths
-- paths containing `..`
-- paths that otherwise escape the target root
+- Aposlop rejects absolute paths.
+- Aposlop rejects paths containing `..`.
+- Aposlop rejects paths that otherwise escape the target directory.
 
 ## Command-line exclusions
 
@@ -47,7 +47,7 @@ The command-line list replaces `core.exclude` for that run.
 
 ## Cache file
 
-Add `.aposlop_cache` to the target project's `.gitignore`:
+Add `.aposlop_cache` to the target directory's `.gitignore`:
 
 ```gitignore
 .aposlop_cache

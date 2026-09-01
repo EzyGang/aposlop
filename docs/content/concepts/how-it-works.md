@@ -6,7 +6,7 @@ This page explains the underlying approach without requiring knowledge of the co
 ```mermaid
 flowchart LR
   files[Supported source files] --> parse[Tree-sitter parsing]
-  parse --> tokens[Canonical and normalized tokens]
+  parse --> tokens[Canonical and normalized streams]
   tokens --> exact[Exact Type-1 and Type-2 candidates]
   tokens --> shingles[Five-token shingles]
   shingles --> join[Exact prefix-filtered similarity join]
@@ -21,9 +21,9 @@ flowchart LR
 ## File discovery
 
 Aposlop walks one target directory and respects standard ignore files.
-It keeps only Rust, Python, TypeScript, and TSX files.
+Aposlop keeps only Rust, Python, TypeScript, and TSX files.
 
-Discovery and analysis run in parallel.
+Aposlop runs discovery and analysis in parallel.
 Aposlop sorts data at stage boundaries so worker order never changes output.
 
 ## Syntax parsing
@@ -34,25 +34,25 @@ Language-specific queries select function-like blocks, identifiers, literals, co
 A file can contain syntax errors without failing the complete command.
 Aposlop keeps valid blocks and reports one file diagnostic.
 
-## Canonical and normalized tokens
+## Canonical and normalized streams
 
-Canonical tokens ignore whitespace and comments while preserving identifiers and literals.
-Equal canonical streams produce Type-1 matches.
+The canonical stream ignores whitespace and comments while preserving identifiers and literals.
+Equal canonical streams produce Type-1 duplicate matches.
 
-Normalized tokens replace identifiers and literals with category markers.
-Equal normalized streams produce Type-2 matches when canonical streams differ.
+The normalized stream replaces identifiers and literals with category markers.
+Equal normalized streams produce Type-2 duplicate matches when canonical streams differ.
 
 ## Type-3 similarity join
 
-Aposlop creates five-token shingles from normalized tokens.
+Aposlop creates five-token shingles from the normalized stream.
 It orders shingles by document frequency and partitions blocks by language and effective threshold.
 
 Length filtering rejects blocks whose sizes cannot meet the Jaccard threshold.
-Prefix filtering uses an inverted index to find pairs that must share a rare prefix shingle.
-Positional filtering rejects pairs that cannot accumulate enough remaining overlap.
+Prefix filtering uses an inverted index to find candidate pairs that share a rare prefix shingle.
+Positional filtering rejects candidate pairs that cannot accumulate enough remaining overlap.
 
-Aposlop verifies every surviving candidate with exact Jaccard similarity.
-These filters do not discard threshold-qualified pairs.
+Aposlop verifies every surviving candidate pair with exact Jaccard similarity.
+These filters preserve every threshold-qualified block pair.
 
 ## Complexity
 
@@ -64,7 +64,8 @@ Every block starts with complexity `1`.
 ## Cache
 
 The local cache stores analysis results for unchanged files.
-Configuration thresholds are not cached, so report settings can change without reparsing unchanged source.
+Aposlop does not cache configuration thresholds.
+Users can change report settings without reparsing unchanged source.
 
 Cache entries include file metadata and analysis schema versions.
 Aposlop replaces the cache atomically after successful output.

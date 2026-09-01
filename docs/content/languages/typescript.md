@@ -11,12 +11,12 @@ Extension overrides can distinguish them.
 
 Aposlop reports:
 
-- function declarations
-- generator function declarations
-- method definitions
-- function expressions
-- generator functions
-- arrow functions
+- Aposlop reports function declarations.
+- Aposlop reports generator function declarations.
+- Aposlop reports method definitions.
+- Aposlop reports function expressions.
+- Aposlop reports generator functions.
+- Aposlop reports arrow functions.
 
 ## Type-2 normalization
 
@@ -24,31 +24,31 @@ Aposlop anonymizes identifiers, property identifiers, shorthand identifiers, and
 
 It also anonymizes:
 
-- numbers
-- strings
-- template strings
-- regular expressions
-- `true`
-- `false`
-- `null`
+- Aposlop anonymizes numbers.
+- Aposlop anonymizes strings.
+- Aposlop anonymizes template strings.
+- Aposlop anonymizes regular expressions.
+- Aposlop anonymizes `true`.
+- Aposlop anonymizes `false`.
+- Aposlop anonymizes `null`.
 
-Comments do not enter canonical token streams.
+Comments do not enter the canonical stream.
 
 ## Complexity decisions
 
 Aposlop counts these decisions:
 
-- `if` statements
-- `for` statements
-- `for in` and `for of` statements
-- `while` statements
-- `do` statements
-- switch cases
-- catch clauses
-- ternary expressions
-- `&&` operations
-- `||` operations
-- `??` operations
+- Aposlop counts `if` statements.
+- Aposlop counts `for` statements.
+- Aposlop counts `for in` and `for of` statements.
+- Aposlop counts `while` statements.
+- Aposlop counts `do` statements.
+- Aposlop counts switch cases.
+- Aposlop counts catch clauses.
+- Aposlop counts ternary expressions.
+- Aposlop counts `&&` operations.
+- Aposlop counts `||` operations.
+- Aposlop counts `??` operations.
 
 ## Configuration
 

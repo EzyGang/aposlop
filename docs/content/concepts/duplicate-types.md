@@ -1,48 +1,48 @@
 # Duplicate types
 
-Aposlop classifies function-like blocks into three mutually exclusive duplicate types.
-Every match contains two root-relative locations and a similarity value.
+Aposlop classifies block pairs into three mutually exclusive duplicate types.
+Every duplicate match contains two locations relative to the target directory and one similarity value.
 
 ## Type-1
 
-Type-1 blocks have equal canonical token streams.
-Canonical tokens preserve identifiers and literals but ignore whitespace and comments.
+A Type-1 duplicate match contains blocks with equal canonical streams.
+The canonical stream preserves identifiers and literals but ignores whitespace and comments.
 
-Formatting-only and comment-only changes remain Type-1 matches.
+Formatting-only and comment-only changes preserve a Type-1 duplicate match.
 
 ## Type-2
 
-Type-2 blocks have different canonical streams and equal normalized streams.
-Normalization replaces provider-captured identifiers and literals with category markers.
+A Type-2 duplicate match contains different canonical streams and equal normalized streams.
+Aposlop replaces captured identifiers and literals with category markers during normalization.
 
-Renaming variables or changing literal values can produce a Type-2 match.
+Renaming variables or changing literal values can produce a Type-2 duplicate match.
 Operator and control-flow changes alter the normalized stream.
 
 ## Type-3
 
-Type-3 blocks have different normalized streams and verified Jaccard similarity at or above the effective threshold.
+A Type-3 duplicate match contains different normalized streams and meets the effective Jaccard threshold.
 
 Aposlop builds five-token shingles and runs an exact prefix-filtered similarity join.
-A two-pointer Jaccard comparison verifies every surviving Type-3 candidate.
+A two-pointer Jaccard comparison verifies every surviving Type-3 candidate pair.
 
 ## Precedence
 
-Aposlop classifies pairs in this order:
+Aposlop checks duplicate types in this order:
 
-1. Type-1
-2. Type-2
-3. Type-3
+1. Aposlop checks Type-1.
+2. Aposlop checks Type-2.
+3. Aposlop checks Type-3.
 
-A pair classified at an earlier level never appears at a later level.
-Disabling an earlier type suppresses its report entry without reclassifying the pair.
+Aposlop does not report one block pair under multiple duplicate types.
+Disabling an earlier duplicate type suppresses its duplicate match without reclassifying the block pair.
 
-## Pair eligibility
+## Block eligibility
 
 Both blocks must meet their effective `min_lines` and `min_nodes` values.
-Both blocks must enable the reported duplicate type.
+Both blocks must enable the applicable duplicate type.
 
-A Type-3 pair uses the larger effective threshold from its two blocks.
+A Type-3 duplicate match uses the larger effective threshold from its two blocks.
 Blocks can match within one file, but a block never matches itself.
 
-Aposlop compares blocks only when they use the same language provider.
-TypeScript and TSX share the TypeScript provider and can match each other.
+Aposlop compares blocks only when they use the same language identity.
+TypeScript and TSX share one language identity and can match each other.

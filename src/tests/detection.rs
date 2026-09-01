@@ -10,6 +10,8 @@ use crate::detection::shingles::{build_shingles, jaccard};
 use crate::detection::{CloneKind, detect};
 use crate::ingest::{FileIdentity, discover};
 use crate::language::{LanguageId, LanguageRegistry};
+
+use super::configuration::load_config;
 type TestResult<T = ()> = anyhow::Result<T>;
 
 #[test]
@@ -53,7 +55,7 @@ fn exact_precedence_emits_each_pair_once() -> TestResult {
 
 #[test]
 fn hash_collisions_require_byte_equality() -> TestResult {
-    let config = Config::parse(
+    let config = load_config(
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3 = false",
     )?;
     let mut left = manual_file("left.ts", &[1, 2], 1);
@@ -99,13 +101,13 @@ fn insufficient_similarity_and_extension_thresholds_are_excluded() -> TestResult
 
     let ts = manual_file("left.ts", &[1, 2, 3, 4], 3);
     let tsx = manual_file("right.tsx", &[1, 2, 3, 5], 4);
-    let config = Config::parse(
+    let config = load_config(
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = 0.5\n[extensions.tsx]\ntype_3_threshold = 0.7",
     )?;
     assert!(detect(&[ts, tsx], &config).is_empty());
     let ts = manual_file("included.ts", &[1, 2, 3, 4], 5);
     let tsx = manual_file("included.tsx", &[1, 2, 3, 5], 6);
-    let config = Config::parse(
+    let config = load_config(
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = 0.5\n[extensions.tsx]\ntype_3_threshold = 0.6",
     )?;
     assert_eq!(detect(&[ts, tsx], &config).len(), 1);
@@ -250,7 +252,7 @@ fn oracle_files(block_count: usize, shingle_count: usize) -> Vec<AnalyzedFile> {
 }
 
 fn permissive_config(threshold: f64) -> TestResult<Config> {
-    Ok(Config::parse(&format!(
+    Ok(load_config(&format!(
         "[core]\nmin_lines = 1\nmin_nodes = 1\n[duplicates_detection]\ntype_3_threshold = {threshold}"
     ))?)
 }

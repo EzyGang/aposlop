@@ -1,40 +1,40 @@
 # Diagnostics
 
 Diagnostics describe recoverable file, traversal, and cache problems.
-They do not stop valid files from completing.
+Diagnostics do not stop valid files.
 
 ## Categories
 
 | Category | Meaning |
 | --- | --- |
-| `analysis` | A source file could not be read, fully parsed, or analyzed. |
-| `cache` | Existing cache data could not be used. |
-| `ingestion` | Traversal or metadata work failed for one path. |
+| `analysis` | Aposlop could not read, fully parse, or analyze a source file. |
+| `cache` | Aposlop could not use existing cache data. |
+| `ingestion` | Aposlop encountered a traversal or metadata failure. |
 
 ## Partial syntax trees
 
-A Tree-sitter root containing errors is not a process failure.
+Tree-sitter root errors do not cause a process failure.
 Aposlop analyzes captured blocks that contain no error or missing node.
-It skips invalid blocks and emits one file diagnostic.
+Aposlop skips invalid blocks and emits one file diagnostic.
 
 ## File failures
 
-A file read or parser failure becomes an analysis diagnostic.
-Other supported files continue through detection and reporting.
+Aposlop converts a file read or parser failure into an analysis diagnostic.
+Aposlop continues detection and reporting for other supported files.
 
 ## Fatal errors
 
 These conditions stop the command:
 
-- invalid command-line usage
-- invalid configuration
-- invalid embedded queries
-- a missing or non-directory target
-- traversal startup failure
-- cache write or atomic persistence failure
-- report output failure
+- Invalid command-line usage stops the command.
+- Invalid configuration stops the command.
+- Invalid embedded queries stop the command.
+- A missing or non-directory target directory stops the command.
+- A traversal startup failure stops the command.
+- A cache write or atomic persistence failure stops the command.
+- A report output failure stops the command.
 
-Fatal operational errors include the target path and owning operation.
+Fatal operational errors identify the target directory and failed operation.
 
 ## Exit behavior
 

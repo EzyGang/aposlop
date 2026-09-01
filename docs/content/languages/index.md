@@ -9,24 +9,24 @@ Aposlop analyzes four source-file extensions.
 | TypeScript | `.ts` |
 | TSX | `.tsx` |
 
-Unsupported extensions are skipped before parsing.
+Aposlop skips unsupported extensions before parsing.
 
 ## Language-aware analysis
 
-Each language uses its own Tree-sitter grammar and analysis queries.
-This lets Aposlop recognize function forms, identifiers, literals, comments, and complexity decisions correctly.
+Aposlop uses a separate Tree-sitter grammar and analysis query set for each language.
+This design lets Aposlop recognize function forms, identifiers, literals, comments, and complexity decisions.
 
-TypeScript and TSX share one analysis identity.
-They can match each other during duplicate detection while keeping separate extension configuration.
+TypeScript and TSX share one language identity.
+One duplicate match can contain a TypeScript block and a TSX block.
 
 ## Shared behavior
 
 Every supported language follows the same report rules:
 
-- whitespace and comments do not change Type-1 tokens
-- identifier and literal changes can produce Type-2 matches
-- verified normalized similarity can produce Type-3 matches
-- function-like blocks receive one complexity score
-- invalid blocks are skipped without stopping valid files
+- Whitespace and comments do not change the canonical stream.
+- Identifier and literal changes can produce Type-2 duplicate matches.
+- Verified normalized similarity can produce Type-3 duplicate matches.
+- Aposlop gives each function-like block one complexity score.
+- Aposlop skips invalid blocks without stopping valid files.
 
 Review the language pages for supported block forms and complexity decisions.

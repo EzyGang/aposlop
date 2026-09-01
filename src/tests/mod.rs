@@ -1,6 +1,7 @@
 mod analysis;
 mod cache;
 mod config;
+mod configuration;
 mod detection;
 mod ingest;
 mod language;

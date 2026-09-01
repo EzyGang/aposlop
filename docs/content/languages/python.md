@@ -6,42 +6,42 @@ Aposlop analyzes `.py` files.
 
 Aposlop reports:
 
-- regular and asynchronous function definitions
-- decorated functions
-- class definitions
-- decorated classes
-- lambda expressions
+- Aposlop reports regular and asynchronous function definitions.
+- Aposlop reports decorated functions.
+- Aposlop reports class definitions.
+- Aposlop reports decorated classes.
+- Aposlop reports lambda expressions.
 
-Classes and their methods are reported as independent blocks.
-Nested valid blocks can also be reported independently.
+Aposlop reports classes and their methods as independent blocks.
+Aposlop can also report nested valid blocks independently.
 
 ## Type-2 normalization
 
 Aposlop anonymizes:
 
-- identifiers
-- integers
-- floating-point values
-- strings
-- concatenated strings
-- `True`
-- `False`
-- `None`
+- Aposlop anonymizes identifiers.
+- Aposlop anonymizes integers.
+- Aposlop anonymizes floating-point values.
+- Aposlop anonymizes strings.
+- Aposlop anonymizes concatenated strings.
+- Aposlop anonymizes `True`.
+- Aposlop anonymizes `False`.
+- Aposlop anonymizes `None`.
 
-Comments do not enter canonical token streams.
+Comments do not enter the canonical stream.
 
 ## Complexity decisions
 
 Aposlop counts these decisions:
 
-- `if` statements
-- `elif` clauses
-- `for` statements
-- `while` statements
-- `case` clauses
-- `except` clauses
-- conditional expressions
-- Boolean operators
+- Aposlop counts `if` statements.
+- Aposlop counts `elif` clauses.
+- Aposlop counts `for` statements.
+- Aposlop counts `while` statements.
+- Aposlop counts `case` clauses.
+- Aposlop counts `except` clauses.
+- Aposlop counts conditional expressions.
+- Aposlop counts Boolean operators.
 
 Every valid function, class, or lambda starts with complexity `1`.
 

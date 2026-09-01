@@ -1,12 +1,31 @@
 # Aposlop
 
-Aposlop detects duplicated code and reports cyclomatic complexity in Rust, Python, TypeScript, and TSX projects.
+Aposlop detects duplicate code and reports cyclomatic complexity in Rust, Python, TypeScript, and TSX projects.
+
+## Requirements
+
+Aposlop requires a stable Rust toolchain that supports edition 2024.
+
+## Installation
+
+Install Aposlop from this checkout:
+
+```text
+cargo install --path .
+```
+
+Confirm the installation:
+
+```text
+aposlop --version
+aposlop --help
+```
 
 ## Documentation
 
 The complete user guide starts at [`docs/content/index.md`](docs/content/index.md).
 
-Preview the documentation site locally:
+Preview the documentation site:
 
 ```text
 cd docs
@@ -14,31 +33,21 @@ uv sync --group dev
 uv run zensical serve
 ```
 
-## Installation
-
-Build and install Aposlop from this checkout:
-
-```text
-cargo install --path .
-```
-
-Aposlop requires a Rust toolchain that supports edition 2024.
-
 ## Command line
 
 ```text
 aposlop [PATH] [OPTIONS]
 ```
 
-`PATH` is the directory to analyze.
-It defaults to the current directory.
+`PATH` identifies the target directory.
+The target directory defaults to the current directory.
 
-| Option | Meaning |
+| Option | Purpose |
 | --- | --- |
-| `--format <terminal\|json>` | Select output format. The default is `terminal`. |
+| `--format <terminal\|json>` | Select terminal or JSON output with `terminal` as the default. |
 | `--min-lines <N>` | Override `core.min_lines`. |
 | `--min-nodes <N>` | Override `core.min_nodes`. |
-| `--exclude <PATH>` | Replace `core.exclude`. Repeat the option for multiple paths. |
+| `--exclude <PATH>` | Replace `core.exclude` with one or more repeated options. |
 | `--use-cache <BOOL>` | Override `core.use_cache` with `true` or `false`. |
 | `--type-1 <BOOL>` | Override `duplicates_detection.type_1`. |
 | `--type-2 <BOOL>` | Override `duplicates_detection.type_2`. |
@@ -50,24 +59,24 @@ It defaults to the current directory.
 | `-V`, `--version` | Print the Aposlop version. |
 
 Boolean options require an explicit `true` or `false` value.
-One or more `--exclude` options form one replacement list.
+Repeated `--exclude` options form one replacement list.
 
 ## Supported files
 
-Aposlop analyzes these extensions:
+| Language | Extension |
+| --- | --- |
+| Rust | `.rs` |
+| Python | `.py` |
+| TypeScript | `.ts` |
+| TSX | `.tsx` |
 
-- Rust: `.rs`
-- Python: `.py`
-- TypeScript: `.ts`
-- TSX: `.tsx`
-
-Other extensions do not enter the analysis pipeline.
+Aposlop skips unsupported extensions.
 Aposlop respects standard ignore files, including `.gitignore`.
 
 ## Configuration
 
-Aposlop loads `<PATH>/.aposlop.toml` when the file exists.
-A missing file uses these defaults:
+Aposlop loads `<PATH>/.aposlop.toml` from the target directory.
+Aposlop uses built-in defaults when this file does not exist.
 
 ```toml
 [core]
@@ -87,94 +96,58 @@ calculate_complexity = true
 complexity_threshold = 15
 ```
 
-Configuration rejects unknown fields, zero count thresholds, invalid ratios, absolute excludes, and excludes containing `..`.
+Configuration rejects unknown fields, zero count thresholds, invalid ratios, absolute exclusions, and exclusions containing `..`.
 The similarity ratio must be finite and within `0.0..=1.0`.
 
-### Language and extension overrides
+See the [configuration guide](docs/content/configuration/index.md) for language overrides, extension overrides, and precedence.
 
-Language tables accept `rust`, `python`, and `typescript` keys.
-Extension tables accept `rs`, `py`, `ts`, and `tsx` keys without a leading dot.
+## Duplicate types
 
-Each table can override these scalar fields:
+A block qualifies when it meets its effective minimum line count and named-node count.
+Both blocks must enable a duplicate type before Aposlop reports a duplicate match.
 
-- `min_lines`
-- `min_nodes`
-- `type_1`
-- `type_2`
-- `type_3`
-- `type_3_threshold`
-- `calculate_complexity`
-- `complexity_threshold`
+- A Type-1 duplicate match contains equal canonical streams.
+- A Type-2 duplicate match contains different canonical streams and equal normalized streams.
+- A Type-3 duplicate match meets the verified Jaccard similarity threshold.
 
-The following example applies one rule to TypeScript files and a stronger rule to TSX files:
-
-```toml
-[languages.typescript]
-min_lines = 6
-
-[extensions.tsx]
-min_lines = 15
-min_nodes = 50
-type_3_threshold = 0.90
-```
-
-Aposlop resolves each field independently in this order:
-
-1. Built-in default
-2. Global configuration section
-3. Matching language table
-4. Matching extension table
-5. Command-line override
-
-A later layer wins over an earlier layer.
-An omitted command-line option preserves the resolved configuration value.
-
-## Duplicate classification
-
-A block qualifies only when it meets its effective minimum line and named-node counts.
-Both blocks must enable a clone type before Aposlop reports that pair.
-
-- Type-1 blocks have equal canonical token streams after whitespace and comments are removed.
-- Type-2 blocks differ as Type-1 streams but match after identifiers and literals are anonymized.
-- Type-3 blocks differ as normalized streams but meet the verified Jaccard similarity threshold.
-
-Aposlop applies Type-1, Type-2, then Type-3 precedence.
-It emits each block pair once.
-TypeScript and TSX blocks can match because they share one language provider.
+Aposlop applies Type-1, Type-2, and Type-3 precedence.
+Aposlop reports each duplicate match once.
+TypeScript and TSX blocks can form one duplicate match.
 
 ## Complexity
 
-Cyclomatic complexity is one plus the unique provider-specific decisions inside a block.
-Decisions include supported branches, loops, alternatives, exception branches, conditional expressions, and short-circuit Boolean operations.
+Aposlop calculates cyclomatic complexity as one plus the unique decisions inside each block.
+Decisions include branches, loops, alternatives, exception branches, conditional expressions, and short-circuit Boolean operations.
 
-Aposlop reports a violation only when the score is greater than `complexity_threshold`.
-Set `calculate_complexity = false` to hide violations without invalidating cached analysis.
+Aposlop reports a violation when the score exceeds `complexity_threshold`.
+Set `calculate_complexity = false` to hide complexity violations.
 
 ## Cache
 
-Aposlop stores versioned analysis data in `<PATH>/.aposlop_cache` when caching is enabled.
-A cache hit requires unchanged path, size, modification time, language, cache format, and analysis schema values.
+Aposlop stores versioned analysis data in `<PATH>/.aposlop_cache`.
+A cache hit requires unchanged file metadata, language identity, cache format, and analysis schema values.
 
-Missing, stale, incompatible, or corrupt entries become cache misses.
-A corrupt cache produces one diagnostic and is replaced after successful analysis.
+Aposlop treats missing, stale, incompatible, or corrupt entries as cache misses.
+Aposlop reports corrupt cache data and replaces the cache after successful analysis.
 Disabled caching performs no cache read or write.
 
-Add `.aposlop_cache` to the project `.gitignore` and keep it ignored.
+Add `.aposlop_cache` to `.gitignore`.
+Keep `.aposlop_cache` ignored.
 
-## Output
+## Output formats
 
-Terminal output contains deterministic duplicate, complexity, diagnostic, and summary sections.
-JSON output contains `schema_version`, `summary`, `duplicates`, `complexity`, and `diagnostics` fields.
-Both formats use the same sorted report data.
+Terminal output contains duplicate, complexity, diagnostic, and summary sections.
+JSON output contains `schema_version`, `summary`, `duplicates`, `complexity`, and `diagnostics`.
+Aposlop sorts the shared report data before either output format writes it.
 JSON output ends with one newline.
 
-Source paths in reports are relative to `PATH`.
-Partial syntax errors produce diagnostics and do not stop valid sibling blocks from being analyzed.
+Reports use paths relative to the target directory.
+Partial syntax errors produce diagnostics while valid sibling blocks continue through analysis.
 
 ## Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | Analysis and output completed. Findings do not change this code. |
+| `0` | Aposlop completed analysis and output without treating findings as failures. |
 | `1` | Configuration, traversal, cache, analysis, or output failed. |
 | `2` | Command-line usage was invalid. |

@@ -5,16 +5,16 @@ Duplicate and complexity findings do not make a successful analysis fail.
 
 | Code | Meaning |
 | ---: | --- |
-| `0` | Analysis and report output completed. The report can contain findings or recoverable diagnostics. |
-| `1` | Configuration, traversal, cache, analysis, or output failed. |
-| `2` | Command-line usage was invalid. |
+| `0` | Aposlop completed analysis and output with any findings or recoverable diagnostics. |
+| `1` | Aposlop encountered a configuration, traversal, cache, analysis, or output failure. |
+| `2` | Aposlop rejected invalid command-line usage. |
 
 ## Automation
 
 Use exit status to detect whether Aposlop completed.
-Read terminal or JSON report data to enforce project-specific finding policies.
+Read terminal or JSON report data to enforce project-specific duplicate and complexity policies.
 
-Example:
+The following command writes a JSON report:
 
 ```bash
 aposlop . --format json > aposlop-report.json
