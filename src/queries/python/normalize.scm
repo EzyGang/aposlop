@@ -1,7 +1,18 @@
 [
-  (function_definition)
-  (lambda)
-] @block
+  (module
+    (function_definition) @block)
+  (block
+    (function_definition) @block)
+  (module
+    (class_definition) @block)
+  (block
+    (class_definition) @block)
+  (decorated_definition
+    definition: (function_definition)) @block
+  (decorated_definition
+    definition: (class_definition)) @block
+  (lambda) @block
+]
 
 (identifier) @anonymize.identifier
 

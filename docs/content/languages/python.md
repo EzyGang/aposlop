@@ -6,10 +6,14 @@ Aposlop analyzes `.py` files.
 
 Aposlop reports:
 
-- function definitions
+- regular and asynchronous function definitions
+- decorated functions
+- class definitions
+- decorated classes
 - lambda expressions
 
-Nested valid blocks can be reported independently.
+Classes and their methods are reported as independent blocks.
+Nested valid blocks can also be reported independently.
 
 ## Type-2 normalization
 
@@ -39,7 +43,7 @@ Aposlop counts these decisions:
 - conditional expressions
 - Boolean operators
 
-Every valid function or lambda starts with complexity `1`.
+Every valid function, class, or lambda starts with complexity `1`.
 
 ## Partial files
 

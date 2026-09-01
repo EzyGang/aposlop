@@ -77,6 +77,39 @@ fn providers_extract_blocks_and_count_complexity_decisions() -> TestResult {
 }
 
 #[test]
+fn python_extracts_classes_decorated_async_functions_methods_and_lambdas() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join("forms.py"),
+        concat!(
+            "@trace(\"network\")\n",
+            "async def fetch(value):\n",
+            "    return value\n",
+            "\n",
+            "class Service:\n",
+            "    def run(self, value):\n",
+            "        return value\n",
+            "\n",
+            "factory = lambda item: item + 1\n",
+        ),
+    )?;
+
+    let files = analyze_fixture(&fixture)?;
+    let analyzed = files
+        .iter()
+        .find(|file| file.identity.path.to_string_lossy() == "forms.py")
+        .ok_or_else(|| anyhow::anyhow!("forms.py was not analyzed"))?;
+    let start_lines: Vec<_> = analyzed
+        .blocks
+        .iter()
+        .map(|block| block.location.start_line)
+        .collect();
+
+    assert_eq!(start_lines, [1, 5, 6, 9]);
+    Ok(())
+}
+
+#[test]
 fn partial_and_invalid_utf8_files_do_not_abort_other_analysis() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(
