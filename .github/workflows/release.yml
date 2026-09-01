@@ -85,7 +85,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.2
       - name: Cache Cargo data
         uses: actions/cache@v6
         with:
@@ -165,7 +165,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.2
       - name: Download release archives
         uses: actions/download-artifact@v8
         with:
@@ -235,7 +235,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Publish to Homebrew tap
-        uses: Justintime50/homebrew-releaser@v4
+        uses: Justintime50/homebrew-releaser@v4.0.0
         with:
           homebrew_owner: ${{ github.repository_owner }}
           homebrew_tap: homebrew-tap

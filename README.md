@@ -30,7 +30,9 @@ Aposlop supports Rust, Python, TypeScript, and TSX.
 Aposlop uses Tree-sitter to parse each supported language.
 
 **Documentation**: https://aposlop.ezygang.digital/
-**Source Code**: https://github.com/EzyGang/aposlop  
+
+**Source Code**: https://github.com/EzyGang/aposlop
+
 **Issues**: https://github.com/EzyGang/aposlop/issues
 
 ---
@@ -72,17 +74,17 @@ You can configure thresholds for each language and file extension.
 You can also exclude paths or accept specific findings.
 These controls let a project accept known findings and continue development.
 
-| Feature | Result |
-| --- | --- |
-| Type-1 detection | Finds exact duplicates |
-| Type-2 detection | Finds duplicates after identifier or literal changes |
-| Type-3 detection | Finds verified near-miss duplicates |
-| Complexity analysis | Calculates complexity for each code block |
-| Terminal code view | Shows both source ranges with line numbers |
-| JSON output | Provides stable data for other tools |
-| CI command | Returns failure when findings remain |
-| Local cache | Reuses analysis for unchanged files |
-| Update check | Warns interactive users when a new release is available |
+| Feature             | Result                                                  |
+| ------------------- | ------------------------------------------------------- |
+| Type-1 detection    | Finds exact duplicates                                  |
+| Type-2 detection    | Finds duplicates after identifier or literal changes    |
+| Type-3 detection    | Finds verified near-miss duplicates                     |
+| Complexity analysis | Calculates complexity for each code block               |
+| Terminal code view  | Shows both source ranges with line numbers              |
+| JSON output         | Provides stable data for other tools                    |
+| CI command          | Returns failure when findings remain                    |
+| Local cache         | Reuses analysis for unchanged files                     |
+| Update check        | Warns interactive users when a new release is available |
 
 ---
 
@@ -241,12 +243,12 @@ score > complexity_threshold
 
 ### Language Support
 
-| Language | Extensions |
-| --- | --- |
-| Rust | `.rs` |
-| Python | `.py` |
-| TypeScript | `.ts` |
-| TSX | `.tsx` |
+| Language   | Extensions |
+| ---------- | ---------- |
+| Rust       | `.rs`      |
+| Python     | `.py`      |
+| TypeScript | `.ts`      |
+| TSX        | `.tsx`     |
 
 Aposlop ignores unsupported extensions.
 Aposlop follows standard ignore files such as `.gitignore`.
@@ -323,22 +325,22 @@ Command-line values override all configuration-file values.
 
 ## CLI Quick Reference
 
-| Command or option | Purpose |
-| --- | --- |
-| `aposlop ci [PATH]` | Print a concise finding summary and fail when findings exist |
-| `aposlop allow <FINDING> [PATH]` | Add a finding to the target's manual exclusions |
-| `--format <terminal\|json>` | Select the report format |
-| `--terminal-output <locations\|code>` | Select terminal duplicate detail |
-| `--min-lines <N>` | Override the minimum block line count |
-| `--min-nodes <N>` | Override the minimum named-node count |
-| `--exclude <PATH>` | Replace configured exclusions |
-| `--use-cache <BOOL>` | Enable or disable the analysis cache |
-| `--type-1 <BOOL>` | Enable or disable Type-1 findings |
-| `--type-2 <BOOL>` | Enable or disable Type-2 findings |
-| `--type-3 <BOOL>` | Enable or disable Type-3 findings |
-| `--type-3-threshold <RATIO>` | Override the Type-3 threshold |
-| `--calculate-complexity <BOOL>` | Enable or disable complexity findings |
-| `--complexity-threshold <N>` | Override the complexity threshold |
+| Command or option                     | Purpose                                                      |
+| ------------------------------------- | ------------------------------------------------------------ |
+| `aposlop ci [PATH]`                   | Print a concise finding summary and fail when findings exist |
+| `aposlop allow <FINDING> [PATH]`      | Add a finding to the target's manual exclusions              |
+| `--format <terminal\|json>`           | Select the report format                                     |
+| `--terminal-output <locations\|code>` | Select terminal duplicate detail                             |
+| `--min-lines <N>`                     | Override the minimum block line count                        |
+| `--min-nodes <N>`                     | Override the minimum named-node count                        |
+| `--exclude <PATH>`                    | Replace configured exclusions                                |
+| `--use-cache <BOOL>`                  | Enable or disable the analysis cache                         |
+| `--type-1 <BOOL>`                     | Enable or disable Type-1 findings                            |
+| `--type-2 <BOOL>`                     | Enable or disable Type-2 findings                            |
+| `--type-3 <BOOL>`                     | Enable or disable Type-3 findings                            |
+| `--type-3-threshold <RATIO>`          | Override the Type-3 threshold                                |
+| `--calculate-complexity <BOOL>`       | Enable or disable complexity findings                        |
+| `--complexity-threshold <N>`          | Override the complexity threshold                            |
 
 [Read the complete CLI reference](https://aposlop.ezygang.digital/reference/cli/).
 
