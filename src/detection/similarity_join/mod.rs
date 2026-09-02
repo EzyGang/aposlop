@@ -5,7 +5,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::language::LanguageId;
 
-use super::{BlockId, CloneMatch, EligibleBlock, Pair};
+use super::groups::GroupBuilder;
+use super::{BlockId, EligibleBlock, Pair};
 
 struct ThresholdGroup {
     threshold: f64,
@@ -15,7 +16,7 @@ struct ThresholdGroup {
 pub(super) fn classify(
     blocks: &[EligibleBlock<'_>],
     classified: &mut HashSet<Pair>,
-    matches: &mut Vec<CloneMatch>,
+    builder: &mut GroupBuilder,
 ) {
     let languages = threshold_groups(blocks);
 
@@ -42,7 +43,7 @@ pub(super) fn classify(
                     &groups[right],
                     left == right,
                     classified,
-                    matches,
+                    builder,
                 );
             }
         }

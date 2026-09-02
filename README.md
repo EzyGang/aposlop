@@ -80,7 +80,7 @@ These controls let a project accept known findings and continue development.
 | Type-2 detection    | Finds duplicates after identifier or literal changes    |
 | Type-3 detection    | Finds verified near-miss duplicates                     |
 | Complexity analysis | Calculates complexity for each code block               |
-| Terminal code view  | Shows both source ranges with line numbers              |
+| Terminal code view  | Shows every group instance with line numbers            |
 | JSON output         | Provides stable data for other tools                    |
 | CI command          | Returns failure when findings remain                    |
 | Local cache         | Reuses analysis for unchanged files                     |
@@ -94,6 +94,7 @@ These controls let a project accept known findings and continue development.
 - **Type-2.** The same process compares streams with normalized identifiers and literals.
 - **Type-3.** Five-token shingles feed a prefix-filtered similarity join.
   Length and position filters prune candidates before Jaccard verification.
+- **Grouping.** Connected duplicate relations become one deterministic group with every source instance.
 - **Complexity.** Each block starts at `1` and adds unique language-specific decision captures.
   Nested blocks have independent scores.
 - **Cache.** Versioned bincode data reuses unchanged analysis.
@@ -239,13 +240,13 @@ aposlop . --format json > aposlop-report.json
 
 A block enters analysis when it meets the line and named-node limits.
 
-Aposlop classifies duplicate findings in this order:
+Aposlop classifies block relations in this order:
 
 1. Type-1 requires identical canonical syntax.
 2. Type-2 allows different identifiers and literals.
 3. Type-3 requires a Jaccard similarity at or above the configured threshold.
 
-Aposlop reports each block pair one time.
+Aposlop reports each connected set of duplicate relations as one group.
 A TypeScript block can match a TSX block.
 
 [Read the duplicate model](https://aposlop.ezygang.digital/concepts/duplicate-types/).
@@ -284,7 +285,7 @@ Aposlop follows standard ignore files such as `.gitignore`.
 ### Output Formats
 
 The terminal report is the default.
-It contains duplicate findings, complexity findings, diagnostics, and a summary.
+It contains duplicate groups, complexity findings, diagnostics, and a summary.
 
 ```bash
 aposlop . --format terminal
@@ -306,7 +307,7 @@ aposlop ci .
 
 ### Manual Exclusions
 
-Aposlop assigns a deterministic five-character ID to each duplicate or complexity finding.
+Aposlop assigns a deterministic five-character ID to each duplicate group or complexity finding.
 
 Add a finding to the manual exclusions:
 

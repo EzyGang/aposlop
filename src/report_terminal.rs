@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::TerminalOutput;
 use crate::analysis::SourceLocation;
-use crate::detection::CloneMatch;
+use crate::detection::CloneGroup;
 use crate::report::{RenderOptions, Report, ReportError};
 
 pub(crate) fn render(
@@ -32,7 +32,7 @@ fn render_duplicates(
     sources: Option<&BTreeMap<PathBuf, SourceText>>,
     style: Styles,
 ) -> Result<(), ReportError> {
-    section(writer, "Duplicates", report.duplicates.len(), style)?;
+    section(writer, "Duplicate groups", report.duplicates.len(), style)?;
     if report.duplicates.is_empty() {
         writeln!(writer, "  None")?;
         return Ok(());
@@ -42,12 +42,19 @@ fn render_duplicates(
             writeln!(writer)?;
         }
         writeln!(writer, "{}{}{}", style.finding(), item.id, style.reset())?;
-        writeln!(writer, "  Similarity  {:.1}%", item.similarity * 100.0)?;
-        render_location(writer, "Left", &item.left)?;
-        render_location(writer, "Right", &item.right)?;
-        if let Some(sources) = sources {
-            render_excerpt(writer, "Left", &item.left, sources)?;
-            render_excerpt(writer, "Right", &item.right, sources)?;
+        writeln!(writer, "  Type        {}", item.kind.label())?;
+        writeln!(
+            writer,
+            "  Minimum similarity  {:.1}%",
+            item.minimum_similarity * 100.0
+        )?;
+        writeln!(writer, "  Instances   {}", item.instances.len())?;
+        for (instance_index, location) in item.instances.iter().enumerate() {
+            let label = format!("Instance {}", instance_index + 1);
+            render_location(writer, &label, location)?;
+            if let Some(sources) = sources {
+                render_excerpt(writer, &label, location, sources)?;
+            }
         }
     }
     Ok(())
@@ -112,7 +119,7 @@ fn render_summary(
     )?;
     writeln!(
         writer,
-        "  Duplicate findings: {}",
+        "  Duplicate groups: {}",
         report.summary.duplicate_count
     )?;
     writeln!(
@@ -187,10 +194,10 @@ fn render_excerpt(
 
 fn load_sources(
     root: &Path,
-    duplicates: &[CloneMatch],
+    duplicates: &[CloneGroup],
 ) -> Result<BTreeMap<PathBuf, SourceText>, ReportError> {
     let mut sources = BTreeMap::new();
-    for location in duplicates.iter().flat_map(|item| [&item.left, &item.right]) {
+    for location in duplicates.iter().flat_map(|item| &item.instances) {
         if sources.contains_key(&location.path) {
             continue;
         }

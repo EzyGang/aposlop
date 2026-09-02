@@ -150,6 +150,7 @@ cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 cargo run -- --help
+cargo run -- ci .
 ```
 
 For analysis or output changes, also run a focused CLI smoke scenario against a temporary fixture outside the repository. Verify terminal and JSON output when either contract changes.

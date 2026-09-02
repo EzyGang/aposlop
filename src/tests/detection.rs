@@ -7,7 +7,7 @@ use xxhash_rust::xxh3::xxh3_64;
 use crate::analysis::{AnalyzedBlock, AnalyzedFile, SourceLocation, analyze};
 use crate::config::Config;
 use crate::detection::shingles::{build_shingles, jaccard};
-use crate::detection::{CloneKind, detect};
+use crate::detection::{CloneKind, detect, detected_relation_count};
 use crate::ingest::{FileIdentity, discover};
 use crate::language::{LanguageId, LanguageRegistry};
 
@@ -15,7 +15,7 @@ use super::configuration::load_config;
 type TestResult<T = ()> = anyhow::Result<T>;
 
 #[test]
-fn exact_precedence_emits_each_pair_once() -> TestResult {
+fn exact_precedence_builds_one_group_with_the_broadest_kind() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(
         fixture.path().join("a.rs"),
@@ -34,22 +34,65 @@ fn exact_precedence_emits_each_pair_once() -> TestResult {
     let discovery = discover(fixture.path(), &config, &registry)?;
     let files = analyze(discovery.files, &registry)?;
 
-    let matches = detect(&files, &config);
-    assert_eq!(
-        matches
-            .iter()
-            .filter(|item| item.kind == CloneKind::Type1)
-            .count(),
-        1
-    );
-    assert_eq!(
-        matches
-            .iter()
-            .filter(|item| item.kind == CloneKind::Type2)
-            .count(),
-        2
-    );
-    assert_eq!(matches.len(), 3);
+    let groups = detect(&files, &config);
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0].kind, CloneKind::Type2);
+    assert_eq!(groups[0].minimum_similarity, 1.0);
+    assert_eq!(groups[0].instances.len(), 3);
+    assert_eq!(detected_relation_count(&files, &config), 3);
+    Ok(())
+}
+
+#[test]
+fn five_identical_blocks_produce_one_stable_group() -> TestResult {
+    let files: Vec<_> = ["e.ts", "d.ts", "c.ts", "b.ts", "a.ts"]
+        .into_iter()
+        .map(|path| manual_file(path, &[1, 2, 3, 4], 1))
+        .collect();
+    let mut reversed = files.clone();
+    reversed.reverse();
+    let config = permissive_config(0.85)?;
+
+    let forward = detect(&files, &config);
+    let reverse = detect(&reversed, &config);
+    assert_eq!(forward, reverse);
+    assert_eq!(forward.len(), 1);
+    assert_eq!(forward[0].kind, CloneKind::Type1);
+    assert_eq!(forward[0].instances.len(), 5);
+    assert_eq!(detected_relation_count(&files, &config), 10);
+    Ok(())
+}
+
+#[test]
+fn transitive_type_3_relations_produce_one_connected_group() -> TestResult {
+    let files = [
+        manual_file("a.ts", &[1, 2, 3, 4], 1),
+        manual_file("b.ts", &[1, 2, 3, 5], 2),
+        manual_file("c.ts", &[1, 2, 5, 6], 3),
+    ];
+    let config = permissive_config(0.60)?;
+
+    let groups = detect(&files, &config);
+    assert_eq!(groups.len(), 1);
+    assert_eq!(groups[0].kind, CloneKind::Type3);
+    assert_eq!(groups[0].minimum_similarity, 0.60);
+    assert_eq!(groups[0].instances.len(), 3);
+    assert_eq!(detected_relation_count(&files, &config), 2);
+    Ok(())
+}
+
+#[test]
+fn disconnected_relations_remain_separate_groups() -> TestResult {
+    let files = [
+        manual_file("a.ts", &[1, 2, 3, 4], 1),
+        manual_file("b.ts", &[1, 2, 3, 5], 2),
+        manual_file("c.ts", &[10, 11, 12, 13], 3),
+        manual_file("d.ts", &[10, 11, 12, 14], 4),
+    ];
+
+    let groups = detect(&files, &permissive_config(0.60)?);
+    assert_eq!(groups.len(), 2);
+    assert!(groups.iter().all(|group| group.instances.len() == 2));
     Ok(())
 }
 
@@ -77,7 +120,7 @@ fn exact_candidates_are_verified_at_the_jaccard_boundary() -> TestResult {
     let included = detect(&[left.clone(), right.clone()], &permissive_config(0.60)?);
     assert_eq!(included.len(), 1);
     assert_eq!(included[0].kind, CloneKind::Type3);
-    assert_eq!(included[0].similarity, 0.60);
+    assert_eq!(included[0].minimum_similarity, 0.60);
     assert!(detect(&[left, right], &permissive_config(0.61)?).is_empty());
     Ok(())
 }
@@ -89,7 +132,7 @@ fn zero_threshold_includes_disjoint_shingle_sets() -> TestResult {
 
     let matches = detect(&[left, right], &permissive_config(0.0)?);
     assert_eq!(matches.len(), 1);
-    assert_eq!(matches[0].similarity, 0.0);
+    assert_eq!(matches[0].minimum_similarity, 0.0);
     Ok(())
 }
 
@@ -142,8 +185,11 @@ fn same_file_blocks_match_without_self_pairs() -> TestResult {
     let matches = detect(&files, &config);
     assert_eq!(matches.len(), 1);
     assert_eq!(matches[0].kind, CloneKind::Type2);
-    assert_eq!(matches[0].left.path, matches[0].right.path);
-    assert_ne!(matches[0].left.start_line, matches[0].right.start_line);
+    assert_eq!(matches[0].instances[0].path, matches[0].instances[1].path);
+    assert_ne!(
+        matches[0].instances[0].start_line,
+        matches[0].instances[1].start_line
+    );
     Ok(())
 }
 
@@ -184,7 +230,7 @@ fn exact_join_recovers_the_formerly_missed_operator_change() -> TestResult {
 
     assert_eq!(exact.len(), 1);
     assert_eq!(exact[0].kind, CloneKind::Type3);
-    assert!(exact[0].similarity >= 0.55);
+    assert!(exact[0].minimum_similarity >= 0.55);
     Ok(())
 }
 
@@ -193,9 +239,9 @@ fn exact_join_matches_brute_force_at_supported_thresholds() -> TestResult {
     let files = oracle_files(240, 64);
 
     for threshold in [0.55, 0.70, 0.85, 0.90] {
-        let exact = detect(&files, &permissive_config(threshold)?);
+        let relation_count = detected_relation_count(&files, &permissive_config(threshold)?);
         let oracle_matches = brute_force_match_count(&files, threshold);
-        assert_eq!(exact.len(), oracle_matches, "threshold {threshold}");
+        assert_eq!(relation_count, oracle_matches, "threshold {threshold}");
     }
 
     Ok(())

@@ -40,6 +40,49 @@ fn full_pipeline_is_identical_before_and_after_cache_hit() -> TestResult {
 }
 
 #[test]
+fn five_duplicates_render_as_one_group() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join(".aposlop.toml"),
+        "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = false\n[metrics]\ncalculate_complexity = false",
+    )?;
+    for path in ["a.py", "b.py", "c.py", "d.py", "e.py"] {
+        fs::write(
+            fixture.path().join(path),
+            "def duplicate(value):\n    return value + 1\n",
+        )?;
+    }
+    let target = fixture.path().to_string_lossy().into_owned();
+    let mut json = Vec::new();
+    run(
+        Cli::try_parse_from(["aposlop", target.as_str(), "--format", "json"])?,
+        &mut json,
+    )?;
+    let report: serde_json::Value = serde_json::from_slice(&json)?;
+    assert_eq!(report["schema_version"], 4);
+    assert_eq!(report["summary"]["duplicate_count"], 1);
+    assert_eq!(
+        report["duplicates"][0]["instances"]
+            .as_array()
+            .map(Vec::len),
+        Some(5)
+    );
+
+    let mut terminal = Vec::new();
+    run(
+        Cli::try_parse_from(["aposlop", target.as_str(), "--terminal-output", "code"])?,
+        &mut terminal,
+    )?;
+    let terminal = String::from_utf8(terminal)?;
+    assert!(terminal.contains("Duplicate groups (1)"));
+    assert!(terminal.contains("  Instances   5"));
+    for index in 1..=5 {
+        assert!(terminal.contains(&format!("  Instance {index} code")));
+    }
+    Ok(())
+}
+
+#[test]
 fn cli_overrides_change_pipeline_rules() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(
@@ -78,7 +121,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
         fixture.path().join(".aposlop.toml"),
         "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = false\n[metrics]\ncomplexity_threshold = 1",
     )?;
-    for path in ["left.rs", "right.rs"] {
+    for path in ["a.rs", "b.rs", "c.rs", "d.rs", "e.rs"] {
         fs::write(
             fixture.path().join(path),
             "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
@@ -93,6 +136,12 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
         .as_str()
         .ok_or_else(|| anyhow::anyhow!("report did not contain a duplicate ID"))?
         .to_owned();
+    assert_eq!(
+        report["duplicates"][0]["instances"]
+            .as_array()
+            .map(Vec::len),
+        Some(5)
+    );
     let complexity_ids: Vec<_> = report["complexity"]
         .as_array()
         .ok_or_else(|| anyhow::anyhow!("report did not contain complexity findings"))?
@@ -104,7 +153,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
                 .ok_or_else(|| anyhow::anyhow!("complexity finding did not contain an ID"))
         })
         .collect::<Result<_, _>>()?;
-    assert_eq!(complexity_ids.len(), 2);
+    assert_eq!(complexity_ids.len(), 5);
 
     let mut command_output = Vec::new();
     run(
@@ -118,7 +167,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
     run(Cli::try_parse_from(scan)?, &mut suppressed)?;
     let report: serde_json::Value = serde_json::from_slice(&suppressed)?;
     assert_eq!(report["summary"]["duplicate_count"], 0);
-    assert_eq!(report["summary"]["complexity_violation_count"], 2);
+    assert_eq!(report["summary"]["complexity_violation_count"], 5);
 
     for complexity_id in &complexity_ids {
         run(
@@ -140,7 +189,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
     run(Cli::try_parse_from(scan)?, &mut restored)?;
     let report: serde_json::Value = serde_json::from_slice(&restored)?;
     assert_eq!(report["summary"]["duplicate_count"], 1);
-    assert_eq!(report["summary"]["complexity_violation_count"], 2);
+    assert_eq!(report["summary"]["complexity_violation_count"], 5);
     Ok(())
 }
 
@@ -166,7 +215,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Findings);
     assert_eq!(
         String::from_utf8(failing)?,
-        "Aposlop CI: failed\nDuplicate findings: 1\nComplexity violations: 0\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 0\n"
     );
 
     let mut overridden = Vec::new();
@@ -177,7 +226,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(overridden)?,
-        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
     );
 
     fs::remove_file(fixture.path().join("right.rs"))?;
@@ -186,7 +235,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(passing)?,
-        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
     );
     Ok(())
 }
