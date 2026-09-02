@@ -21,7 +21,7 @@ flowchart LR
 ## File discovery
 
 Aposlop walks one target directory and respects standard ignore files.
-Aposlop keeps only Rust, Python, TypeScript, and TSX files.
+Aposlop keeps only Go, Rust, Python, TypeScript, and TSX files.
 
 Aposlop runs discovery and analysis in parallel.
 Aposlop sorts data at stage boundaries so worker order never changes output.

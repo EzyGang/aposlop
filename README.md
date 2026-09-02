@@ -32,7 +32,7 @@
 **Aposlop** is a fast command-line tool.
 It finds duplicate code and calculates cyclomatic complexity.
 
-Aposlop supports Rust, Python, TypeScript, and TSX.
+Aposlop supports Go, Rust, Python, TypeScript, and TSX.
 Aposlop uses Tree-sitter to parse each supported language.
 
 **Documentation**: https://aposlop.ezygang.digital/
@@ -278,6 +278,7 @@ score > complexity_threshold
 
 | Language   | Extensions |
 | ---------- | ---------- |
+| Go         | `.go`      |
 | Rust       | `.rs`      |
 | Python     | `.py`      |
 | TypeScript | `.ts`      |

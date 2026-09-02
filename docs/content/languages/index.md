@@ -1,9 +1,10 @@
 # Supported languages
 
-Aposlop analyzes four source-file extensions.
+Aposlop analyzes five source-file extensions.
 
 | Language | Extensions |
 | --- | --- |
+| Go | `.go` |
 | Rust | `.rs` |
 | Python | `.py` |
 | TypeScript | `.ts` |

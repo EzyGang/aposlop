@@ -8,6 +8,102 @@ use super::analysis::analyze_fixture;
 type TestResult<T = ()> = anyhow::Result<T>;
 
 #[test]
+fn go_covers_blocks_type_2_normalization_and_cyclomatic_decisions() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join("control.go"),
+        concat!(
+            "package sample\n",
+            "\n",
+            "func Control[T comparable](value T, items []T, ch <-chan T, ready bool) bool {\n",
+            "    if ready {\n",
+            "    } else if value == items[0] {\n",
+            "    }\n",
+            "    for range 3 {}\n",
+            "    for _, item := range items { _ = item }\n",
+            "    switch value {\n",
+            "    case items[0]:\n",
+            "    case items[1], items[2]:\n",
+            "    default:\n",
+            "    }\n",
+            "    switch typed := any(value).(type) {\n",
+            "    case T: _ = typed\n",
+            "    default:\n",
+            "    }\n",
+            "    select {\n",
+            "    case <-ch:\n",
+            "    default:\n",
+            "    }\n",
+            "    nested := func(flag bool) bool {\n",
+            "        if flag && ready { return true }\n",
+            "        return false\n",
+            "    }\n",
+            "    _ = nested\n",
+            "    return ready && len(items) > 0 || value == items[0]\n",
+            "}\n",
+        ),
+    )?;
+    fs::write(
+        fixture.path().join("forms.go"),
+        concat!(
+            "package sample\n",
+            "\n",
+            "type Box[T any] struct { value T }\n",
+            "func Free() {}\n",
+            "func (box *Box[T]) Method() T { return box.value }\n",
+            "var Literal = func(value int) int { return value }\n",
+        ),
+    )?;
+    fs::write(
+        fixture.path().join("first.go"),
+        concat!(
+            "package sample\n",
+            "\n",
+            "func Collect(value firstpkg.First) []any {\n",
+            "again:\n",
+            "    // first comment\n",
+            "    output := []any{1, 1.5, 2i, 'a', `raw`, \"text\", true, false, nil}\n",
+            "    if value.Left != 3 { goto again }\n",
+            "    return output\n",
+            "}\n",
+        ),
+    )?;
+    fs::write(
+        fixture.path().join("second.go"),
+        concat!(
+            "package sample\n",
+            "\n",
+            "func Gather(other secondpkg.Second) []any {\n",
+            "retry:\n",
+            "    /* second comment */\n",
+            "    result := []any{99, 9.5, 7i, 'z', `other`, \"changed\", true, false, nil}\n",
+            "    if other.Right != 8 { goto retry }\n",
+            "    return result\n",
+            "}\n",
+        ),
+    )?;
+
+    let files = analyze_fixture(&fixture)?;
+    let control = file(&files, "control.go")?;
+    assert!(control.diagnostics.is_empty());
+    assert_eq!(
+        control
+            .blocks
+            .iter()
+            .map(|block| block.complexity)
+            .collect::<Vec<_>>(),
+        [11, 3]
+    );
+    assert_eq!(file(&files, "forms.go")?.blocks.len(), 3);
+
+    let first = only_block(&files, "first.go")?;
+    let second = only_block(&files, "second.go")?;
+    assert_ne!(first.exact, second.exact);
+    assert_eq!(first.normalized, second.normalized);
+    Ok(())
+}
+
+#[test]
 fn python_314_syntax_and_decisions_parse_without_diagnostics() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(

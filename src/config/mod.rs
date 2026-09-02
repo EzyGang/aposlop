@@ -11,8 +11,8 @@ use thiserror::Error;
 
 use self::validation::{compile_excludes, validate_keys};
 
-const LANGUAGE_KEYS: &[&str] = &["rust", "python", "typescript"];
-const EXTENSION_KEYS: &[&str] = &["rs", "py", "ts", "tsx"];
+const LANGUAGE_KEYS: &[&str] = &["go", "rust", "python", "typescript"];
+const EXTENSION_KEYS: &[&str] = &["go", "rs", "py", "ts", "tsx"];
 
 #[derive(Clone, Debug)]
 pub(crate) struct Config {

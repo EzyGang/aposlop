@@ -23,7 +23,7 @@ aposlop allow <FINDING> [PATH]
 | --- | --- | --- |
 | `--min-lines <N>` | Positive integer | Override `core.min_lines`. |
 | `--min-nodes <N>` | Positive integer | Override `core.min_nodes`. |
-| `--exclude <PATH>` | Relative path | Replace `core.exclude` with one or more repeated options. |
+| `--exclude <REGEX>` | Rust regular expression | Replace `core.exclude` with one or more repeated expressions. |
 
 ## Cache
 
@@ -54,7 +54,7 @@ It returns exit code `1` when either finding count is nonzero.
 Analysis override options can follow the command.
 
 ```bash
-aposlop ci ../project --exclude generated/
+aposlop ci ../project --exclude '(^|/)generated(?:/|$)'
 ```
 
 ## Allow command
@@ -99,7 +99,7 @@ aposlop . --type-2 false --use-cache false
 Replace configured exclusions:
 
 ```bash
-aposlop . --exclude generated/ --exclude fixtures/
+aposlop . --exclude '(^|/)generated(?:/|$)' --exclude '(^|/)fixtures(?:/|$)'
 ```
 
 Allow a finding in another target:

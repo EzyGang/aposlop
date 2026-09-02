@@ -40,6 +40,10 @@ fn rules_resolve_global_language_extension_then_cli() -> TestResult {
     type_3_threshold = 0.70
     [metrics]
     complexity_threshold = 20
+    [languages.go]
+    min_lines = 7
+    [extensions.go]
+    min_lines = 10
     [languages.typescript]
     min_lines = 6
     type_2 = false
@@ -59,6 +63,7 @@ fn rules_resolve_global_language_extension_then_cli() -> TestResult {
         ..CliOverrides::default()
     })?;
 
+    assert_eq!(config.rules("go", "go").min_lines, 10);
     assert_eq!(config.rules("typescript", "ts").min_lines, 6);
     let tsx = config.rules("typescript", "tsx");
     assert_eq!(tsx.min_lines, 9);
@@ -100,7 +105,7 @@ fn explicit_cli_false_and_excludes_replace_file_values() -> TestResult {
 #[test]
 fn rejects_unknown_keys_and_invalid_values() -> TestResult {
     assert!(matches!(
-        load_config("[languages.go]\nmin_lines = 2"),
+        load_config("[languages.ruby]\nmin_lines = 2"),
         Err(ConfigError::UnknownLanguage(_))
     ));
     assert!(matches!(

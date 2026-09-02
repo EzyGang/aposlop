@@ -9,7 +9,7 @@ Aposlop uses built-in defaults when the file does not exist.
 [core]
 min_lines = 5
 min_nodes = 30
-exclude = ["tests/", "vendor/", "node_modules/", "target/"]
+exclude = ["(^|/)tests(?:/|$)", "(^|/)vendor(?:/|$)", "(^|/)node_modules(?:/|$)", "(^|/)target(?:/|$)"]
 use_cache = true
 
 [duplicates_detection]
@@ -28,10 +28,13 @@ A configuration failure stops analysis and returns exit code `1`.
 
 ## Language overrides
 
-Aposlop supports the `rust`, `python`, and `typescript` language keys.
+Aposlop supports the `go`, `rust`, `python`, and `typescript` language keys.
 The `typescript` language table applies to `.ts` and `.tsx` files.
 
 ```toml
+[languages.go]
+min_lines = 8
+
 [languages.rust]
 min_lines = 10
 
@@ -42,7 +45,7 @@ complexity_threshold = 20
 
 ## Extension overrides
 
-Aposlop supports the `rs`, `py`, `ts`, and `tsx` extension keys.
+Aposlop supports the `go`, `rs`, `py`, `ts`, and `tsx` extension keys.
 Do not include a leading dot.
 
 ```toml

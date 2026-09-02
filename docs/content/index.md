@@ -1,6 +1,6 @@
 # Aposlop documentation
 
-Aposlop detects duplicate code and reports cyclomatic complexity across Rust, Python, TypeScript, and TSX projects.
+Aposlop detects duplicate code and reports cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX projects.
 
 Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without unconditional all-pairs comparison.
 
@@ -18,7 +18,7 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 
 | Capability | Support |
 | --- | --- |
-| Languages | Rust, Python, TypeScript, and TSX |
+| Languages | Go, Rust, Python, TypeScript, and TSX |
 | Duplicate types | Type-1, Type-2, and Type-3 |
 | Complexity | Cyclomatic complexity for function-like blocks |
 | Output | Deterministic terminal and JSON reports |

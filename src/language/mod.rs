@@ -1,3 +1,4 @@
+mod go;
 mod python;
 mod rust;
 mod typescript;
@@ -17,8 +18,12 @@ const NORMALIZATION_CAPTURES: &[&str] = &[
     "ignore",
 ];
 const METRIC_CAPTURES: &[&str] = &["complexity"];
-static PROVIDERS: [&dyn LanguageSupport; 3] =
-    [&rust::SUPPORT, &python::SUPPORT, &typescript::SUPPORT];
+static PROVIDERS: [&dyn LanguageSupport; 4] = [
+    &go::SUPPORT,
+    &rust::SUPPORT,
+    &python::SUPPORT,
+    &typescript::SUPPORT,
+];
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -26,6 +31,7 @@ pub(crate) enum LanguageId {
     Rust,
     Python,
     TypeScript,
+    Go,
 }
 
 pub(crate) trait LanguageSupport: Sync {
@@ -73,6 +79,7 @@ impl LanguageId {
     #[must_use]
     pub(crate) const fn key(self) -> &'static str {
         match self {
+            Self::Go => "go",
             Self::Rust => "rust",
             Self::Python => "python",
             Self::TypeScript => "typescript",
@@ -82,7 +89,7 @@ impl LanguageId {
 
 impl LanguageRegistry {
     pub(crate) fn compile() -> Result<Self, LanguageError> {
-        let mut languages = HashMap::with_capacity(4);
+        let mut languages = HashMap::with_capacity(5);
         for provider in PROVIDERS {
             for &extension in provider.extensions() {
                 let grammar = provider
