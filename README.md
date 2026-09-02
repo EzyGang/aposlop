@@ -253,6 +253,7 @@ Aposlop classifies block relations in this order:
 3. Type-3 requires a Jaccard similarity at or above the configured threshold.
 
 Aposlop reports each connected set of duplicate relations as one group.
+Two blocks do not match when either contains the other in the same file.
 A TypeScript block can match a TSX block.
 
 [Read the duplicate model](https://aposlop.ezygang.digital/concepts/duplicate-types/).

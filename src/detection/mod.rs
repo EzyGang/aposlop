@@ -122,6 +122,17 @@ impl Pair {
             Self(right, left)
         }
     }
+
+    fn is_containment(self, blocks: &[EligibleBlock<'_>]) -> bool {
+        let left = blocks[self.0.0].block;
+        let right = blocks[self.1.0].block;
+        if left.location.path != right.location.path {
+            return false;
+        }
+
+        left.start_byte <= right.start_byte && left.end_byte >= right.end_byte
+            || right.start_byte <= left.start_byte && right.end_byte >= left.end_byte
+    }
 }
 
 const FIRST_ID_ALPHABET: &[u8; 62] =

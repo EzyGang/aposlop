@@ -62,7 +62,8 @@ Both blocks must meet their effective `min_lines` and `min_nodes` values.
 Both blocks must enable the applicable duplicate type.
 
 A Type-3 relation uses the larger effective threshold from its two blocks.
-Blocks can match within one file, but a block never matches itself.
+Sibling blocks can match within one file.
+Two blocks do not match when either contains the other in the same file.
 
 Aposlop compares blocks only when they use the same language identity.
 TypeScript and TSX share one language identity and can match each other.

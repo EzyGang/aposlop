@@ -36,6 +36,9 @@ fn classify_groups(
         for left_index in 0..group.len() {
             for right_index in left_index + 1..group.len() {
                 let pair = Pair::new(group[left_index], group[right_index]);
+                if pair.is_containment(blocks) {
+                    continue;
+                }
                 if classified.contains(&pair) {
                     continue;
                 }

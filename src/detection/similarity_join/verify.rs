@@ -11,7 +11,7 @@ pub(super) fn verify_pair(
     classified: &mut HashSet<Pair>,
     groups: &mut GroupBuilder,
 ) {
-    if classified.contains(&pair) {
+    if pair.is_containment(blocks) || classified.contains(&pair) {
         return;
     }
 

@@ -194,6 +194,36 @@ fn same_file_blocks_match_without_self_pairs() -> TestResult {
 }
 
 #[test]
+fn containing_python_blocks_do_not_match_their_contents() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join("model.py"),
+        concat!(
+            "import torch.nn as nn\n",
+            "\n",
+            "class ConvBlock(nn.Sequential):\n",
+            "    def __init__(self, input_channels: int, output_channels: int) -> None:\n",
+            "        super().__init__(\n",
+            "            nn.Conv2d(\n",
+            "                input_channels, output_channels, kernel_size=3, padding=1, bias=False\n",
+            "            ),\n",
+            "            nn.BatchNorm2d(output_channels),\n",
+            "            nn.ReLU(inplace=True),\n",
+            "        )\n",
+        ),
+    )?;
+    let config = permissive_config(0.85)?;
+    let registry = LanguageRegistry::compile()?;
+    let discovery = discover(fixture.path(), &config, &registry)?;
+    let files = analyze(discovery.files, &registry)?;
+
+    assert_eq!(files[0].blocks.len(), 2);
+    assert!(detect(&files, &config).is_empty());
+    assert_eq!(detected_relation_count(&files, &config), 0);
+    Ok(())
+}
+
+#[test]
 fn shingles_and_jaccard_are_repeatable() -> TestResult {
     let tokens = [2, 3, 5, 7, 11, 13];
     assert_eq!(build_shingles(&tokens), build_shingles(&tokens));
