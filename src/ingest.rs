@@ -66,6 +66,7 @@ struct Worker<'a> {
     root: &'a Path,
     config: &'a Config,
     registry: &'a LanguageRegistry,
+    normalized_path: String,
     shared: Arc<Mutex<Collected>>,
     local: Collected,
 }
@@ -94,6 +95,7 @@ pub(crate) fn discover(
             root: &root,
             config,
             registry,
+            normalized_path: String::new(),
             shared: Arc::clone(&shared),
             local: Collected::default(),
         };
@@ -142,12 +144,7 @@ impl Worker<'_> {
         if relative.as_os_str().is_empty() {
             return WalkState::Continue;
         }
-        if self
-            .config
-            .excludes()
-            .iter()
-            .any(|exclude| relative.starts_with(exclude))
-        {
+        if self.is_excluded(relative) {
             return if entry.file_type().is_some_and(|kind| kind.is_dir()) {
                 WalkState::Skip
             } else {
@@ -159,6 +156,18 @@ impl Worker<'_> {
         }
         self.add_file(&entry, relative);
         WalkState::Continue
+    }
+
+    fn is_excluded(&mut self, relative: &Path) -> bool {
+        self.normalized_path.clear();
+        for component in relative.components() {
+            if !self.normalized_path.is_empty() {
+                self.normalized_path.push('/');
+            }
+            self.normalized_path
+                .push_str(&component.as_os_str().to_string_lossy());
+        }
+        self.config.is_excluded(&self.normalized_path)
     }
 
     fn add_file(&mut self, entry: &DirEntry, relative: &Path) {

@@ -22,7 +22,9 @@ fn defaults_match_the_v1_contract() -> TestResult {
     assert!(rules.calculate_complexity);
     assert_eq!(rules.complexity_threshold, 15);
     assert!(config.use_cache());
-    assert_eq!(config.excludes().len(), 4);
+    assert!(config.is_excluded("crate/tests/check.rs"));
+    assert!(config.is_excluded("packages/app/node_modules/library.js"));
+    assert!(!config.is_excluded("crate/contest/check.rs"));
     Ok(())
 }
 
@@ -83,16 +85,15 @@ fn explicit_cli_false_and_excludes_replace_file_values() -> TestResult {
             type_1: Some(false),
             ..RuleOverride::default()
         },
-        exclude: Some(vec![PathBuf::from("build"), PathBuf::from("fixtures")]),
+        exclude: Some(vec!["^build(?:/|$)".to_owned(), "^fixtures/".to_owned()]),
         use_cache: Some(false),
     })?;
 
     assert!(!config.rules("rust", "rs").type_1);
     assert!(!config.use_cache());
-    assert_eq!(
-        config.excludes(),
-        [PathBuf::from("build"), PathBuf::from("fixtures")]
-    );
+    assert!(config.is_excluded("build/output.rs"));
+    assert!(config.is_excluded("fixtures/data.py"));
+    assert!(!config.is_excluded("generated/output.rs"));
     Ok(())
 }
 
@@ -115,8 +116,8 @@ fn rejects_unknown_keys_and_invalid_values() -> TestResult {
         Err(ConfigError::Similarity)
     ));
     assert!(matches!(
-        load_config("[core]\nexclude = [\"../outside\"]"),
-        Err(ConfigError::InvalidExclude(_))
+        load_config("[core]\nexclude = [\"[\"]"),
+        Err(ConfigError::InvalidExclude { .. })
     ));
     assert!(load_config("[core]\nunknown = true").is_err());
     Ok(())

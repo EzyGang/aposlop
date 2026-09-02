@@ -75,10 +75,11 @@ fn five_duplicates_render_as_one_group() -> TestResult {
     )?;
     let terminal = String::from_utf8(terminal)?;
     assert!(terminal.contains("Duplicate groups (1)"));
-    assert!(terminal.contains("  Instances   5"));
+    assert!(terminal.contains("Type-1 · 100.0% minimum similarity · 5 instances"));
     for index in 1..=5 {
-        assert!(terminal.contains(&format!("  Instance {index} code")));
+        assert!(terminal.contains(&format!("  Instance #{index}: ")));
     }
+    assert!(!terminal.contains(" code\n"));
     Ok(())
 }
 
@@ -240,7 +241,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
 
     let mut overridden = Vec::new();
     let status = run(
-        Cli::try_parse_from(["aposlop", "ci", target.as_str(), "--exclude", "right.rs"])?,
+        Cli::try_parse_from(["aposlop", "ci", target.as_str(), "--exclude", "right[.]rs$"])?,
         &mut overridden,
     )?;
     assert_eq!(status, CommandStatus::Success);

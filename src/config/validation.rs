@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
-use std::path::{Component, PathBuf};
+
+use regex::RegexSet;
 
 use super::{ConfigError, RuleOverride};
 
@@ -44,20 +45,6 @@ pub(super) fn validate_keys(
     Ok(())
 }
 
-pub(super) fn validate_excludes(excludes: &[PathBuf]) -> Result<(), ConfigError> {
-    for exclude in excludes {
-        let invalid = exclude.is_absolute()
-            || exclude.components().any(|part| {
-                matches!(
-                    part,
-                    Component::ParentDir | Component::RootDir | Component::Prefix(_)
-                )
-            });
-
-        if invalid {
-            return Err(ConfigError::InvalidExclude(exclude.clone()));
-        }
-    }
-
-    Ok(())
+pub(super) fn compile_excludes(excludes: &[String]) -> Result<RegexSet, ConfigError> {
+    RegexSet::new(excludes).map_err(|source| ConfigError::InvalidExclude { source })
 }

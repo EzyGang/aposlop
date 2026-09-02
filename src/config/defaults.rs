@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use super::{CoreConfig, DuplicateConfig, MetricsConfig};
 
 impl Default for CoreConfig {
@@ -7,10 +5,14 @@ impl Default for CoreConfig {
         Self {
             min_lines: 5,
             min_nodes: 30,
-            exclude: ["tests", "vendor", "node_modules", "target"]
-                .into_iter()
-                .map(PathBuf::from)
-                .collect(),
+            exclude: [
+                r"(^|/)tests(?:/|$)",
+                r"(^|/)vendor(?:/|$)",
+                r"(^|/)node_modules(?:/|$)",
+                r"(^|/)target(?:/|$)",
+            ]
+            .map(str::to_owned)
+            .to_vec(),
             use_cache: true,
         }
     }

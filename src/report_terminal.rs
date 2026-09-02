@@ -42,19 +42,24 @@ fn render_duplicates(
         if index > 0 {
             writeln!(writer)?;
         }
-        writeln!(writer, "{}{}{}", style.finding(), item.id, style.reset())?;
-        writeln!(writer, "  Type        {}", item.kind.label())?;
         writeln!(
             writer,
-            "  Minimum similarity  {:.1}%",
-            item.minimum_similarity * 100.0
+            "{}{}{}  {} · {:.1}% minimum similarity · {} instances",
+            style.finding(),
+            item.id,
+            style.reset(),
+            item.kind.label(),
+            item.minimum_similarity * 100.0,
+            item.instances.len()
         )?;
-        writeln!(writer, "  Instances   {}", item.instances.len())?;
         for (instance_index, location) in item.instances.iter().enumerate() {
-            let label = format!("Instance {}", instance_index + 1);
+            let label = format!("Instance #{}", instance_index + 1);
             render_location(writer, &label, location)?;
             if let Some(sources) = sources {
-                render_excerpt(writer, &label, location, sources)?;
+                render_excerpt(writer, location, sources, style)?;
+                if instance_index + 1 < item.instances.len() {
+                    writeln!(writer)?;
+                }
             }
         }
     }
@@ -174,27 +179,29 @@ fn render_location(
         .saturating_add(1);
     writeln!(
         writer,
-        "  {label:<10} {}:{}",
+        "  {label}: {}:{}",
         location.path.display(),
         location.start_line
     )?;
     writeln!(
         writer,
-        "  {:<10} lines {}–{} ({line_count} lines)",
-        "", location.start_line, location.end_line
+        "  {:width$} lines {}–{} ({line_count} lines)",
+        "",
+        location.start_line,
+        location.end_line,
+        width = label.len() + 1
     )
 }
 
 fn render_excerpt(
     writer: &mut impl Write,
-    label: &str,
     location: &SourceLocation,
     sources: &BTreeMap<PathBuf, SourceText>,
+    style: Styles,
 ) -> Result<(), ReportError> {
     let Some(source) = sources.get(&location.path) else {
         return Ok(());
     };
-    writeln!(writer, "  {label} code")?;
     let width = location.end_line.to_string().len();
     for line_number in location.start_line..=location.end_line {
         let Some(line) = source.line(line_number) else {
@@ -202,7 +209,9 @@ fn render_excerpt(
         };
         writeln!(
             writer,
-            "    {line_number:>width$} │ {}",
+            "    {}{line_number:>width$} │{} {}",
+            style.muted(),
+            style.reset(),
             String::from_utf8_lossy(line)
         )?;
     }
@@ -275,6 +284,9 @@ impl Styles {
 
     const fn finding(self) -> &'static str {
         if self.enabled { "\x1b[1;33m" } else { "" }
+    }
+    const fn muted(self) -> &'static str {
+        if self.enabled { "\x1b[2m" } else { "" }
     }
 
     const fn reset(self) -> &'static str {
