@@ -3,6 +3,7 @@
 Aposlop separates operational failures from reportable findings.
 Terminal and JSON output do not fail because findings exist.
 CI output fails when duplicates or complexity violations exist.
+Unused ignores are informational and do not change any exit code.
 
 | Code | Meaning |
 | ---: | --- |
@@ -18,8 +19,8 @@ Use CI output when findings must fail an automated check:
 aposlop ci .
 ```
 
-The command prints only its status, duplicate count, and complexity violation count.
-It returns exit code `1` when either count is nonzero.
+The command prints its status, duplicate count, complexity violation count, and unused-ignore count.
+It returns exit code `1` when either finding count is nonzero.
 
 Use JSON output when automation needs complete report data:
 

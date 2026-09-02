@@ -15,6 +15,11 @@ pub(crate) struct AllowList {
     ids: BTreeSet<FindingId>,
 }
 
+pub(crate) struct AllowListUsage<'a> {
+    configured: &'a BTreeSet<FindingId>,
+    used: BTreeSet<FindingId>,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum AddOutcome {
     Added,
@@ -83,8 +88,11 @@ impl AllowList {
     }
 
     #[must_use]
-    pub(crate) fn contains(&self, id: FindingId) -> bool {
-        self.ids.contains(&id)
+    pub(crate) fn usage(&self) -> AllowListUsage<'_> {
+        AllowListUsage {
+            configured: &self.ids,
+            used: BTreeSet::new(),
+        }
     }
 
     pub(crate) fn add(root: &Path, id: FindingId) -> Result<AddOutcome, AllowListError> {
@@ -122,5 +130,20 @@ impl AllowList {
                 source: error.error,
             })?;
         Ok(())
+    }
+}
+impl AllowListUsage<'_> {
+    #[must_use]
+    pub(crate) fn allows(&mut self, id: FindingId) -> bool {
+        if !self.configured.contains(&id) {
+            return false;
+        }
+        self.used.insert(id);
+        true
+    }
+
+    #[must_use]
+    pub(crate) fn unused(self) -> Vec<FindingId> {
+        self.configured.difference(&self.used).copied().collect()
     }
 }

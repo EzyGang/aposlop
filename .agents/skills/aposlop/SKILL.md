@@ -35,10 +35,11 @@ Replace it with `uvx aposlop` when using the temporary installation.
 1. Read the repository instructions and existing quality configuration.
 2. Locate an existing `.aposlop.toml`, `.aposlopignore`, and `.gitignore` before changing files.
 3. Run a complete baseline report from the target root.
-4. Inspect diagnostics before interpreting findings.
+4. Inspect diagnostics and unused ignores before interpreting findings.
 5. Refactor unintended duplication and excessive control flow at their source.
-6. Run the complete report again.
-7. Run `aposlop ci .` only after the complete report is clean or accepted.
+6. Remove obsolete ignore IDs only after confirming their findings no longer exist.
+7. Run the complete report again.
+8. Run `aposlop ci .` only after the complete report is clean or accepted.
 
 Use a terminal code report for human investigation:
 
@@ -154,6 +155,10 @@ aposlop allow <FINDING_ID> .
 This command writes the deterministic finding ID to `.aposlopignore` without running analysis.
 Rerun the complete report and `aposlop ci .` after adding the entry.
 
+A valid ignore ID that matches no current finding appears in the final `Unused ignores` section.
+Remove an unused ID after review instead of deleting ignore entries automatically.
+Unused ignores are informational and do not change the CI exit code.
+
 ## Completion checks
 
 For configuration or agent-setup changes, verify all of these outcomes:
@@ -161,8 +166,9 @@ For configuration or agent-setup changes, verify all of these outcomes:
 1. `aposlop . --format json` completes without operational diagnostics that the change introduced.
 2. The report covers the intended supported files.
 3. `.aposlop_cache` is ignored.
-4. `aposlop ci .` returns the result required by repository policy.
-5. Agent instructions name the same command and target path that were verified.
+4. No unused ignore remains without an explicit policy reason.
+5. `aposlop ci .` returns the result required by repository policy.
+6. Agent instructions name the same command and target path that were verified.
 
 Do not claim the setup is clean when findings remain.
 Report accepted findings separately from unresolved findings.
