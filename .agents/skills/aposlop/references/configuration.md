@@ -45,7 +45,7 @@ complexity_threshold = 15
 | --- | --- | ---: | --- |
 | `core.min_lines` | integer | `5` | Greater than zero |
 | `core.min_nodes` | integer | `30` | Greater than zero |
-| `core.exclude` | relative path array | standard build and dependency paths | No absolute paths or `..` components |
+| `core.exclude` | gitignore-style pattern array | standard build and dependency paths | Each value follows `.gitignore` pattern syntax |
 | `core.use_cache` | Boolean | `true` | Global only |
 | `duplicates_detection.type_1` | Boolean | `true` | None |
 | `duplicates_detection.type_2` | Boolean | `true` | None |
@@ -59,10 +59,10 @@ A score equal to the threshold does not violate the policy.
 
 ## Language and extension overrides
 
-Supported language keys are `rust`, `python`, and `typescript`.
+Supported language keys are `go`, `rust`, `python`, and `typescript`.
 The `typescript` language key applies to TypeScript and TSX.
 
-Supported extension keys are `rs`, `py`, `ts`, and `tsx`.
+Supported extension keys are `go`, `rs`, `py`, `ts`, and `tsx`.
 Do not include the leading dot in an extension key.
 
 Language and extension tables accept these fields:
@@ -101,8 +101,9 @@ Aposlop applies standard ignore sources before parsing:
 - Parent ignore rules
 - Hidden-file filtering
 
-Configured exclusions are relative to the target directory.
-A directory exclusion skips its complete subtree.
+Configured exclusions use the same pattern syntax as one `.gitignore` line.
+A directory pattern such as `tests/` matches that directory name at any depth.
+Use `/tests/` for the target root only or `**/tests/**` for explicit recursive matching.
 
 Add `.aposlop_cache` to `.gitignore` when the cache is enabled.
 Aposlop does not change ignore files automatically.

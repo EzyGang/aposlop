@@ -1,12 +1,12 @@
 ---
 name: aposlop
-description: Configure and use Aposlop to find duplicated code and cyclomatic complexity in Rust, Python, TypeScript, and TSX repositories. Use this skill whenever a user asks to detect code duplication, code clones, repeated agent-generated logic, code slop, or excessive complexity. Also use it when adding Aposlop to a repository, agent validation workflow, or CI process, and when investigating or resolving Aposlop findings.
+description: Configure and use Aposlop to find duplicated code and cyclomatic complexity in Go, Rust, Python, TypeScript, and TSX repositories. Use this skill whenever a user asks to detect code duplication, code clones, repeated agent-generated logic, code slop, or excessive complexity. Also use it when adding Aposlop to a repository, agent validation workflow, or CI process, and when investigating or resolving Aposlop findings.
 ---
 
 # Aposlop
 
 Use Aposlop as a source-quality check for duplicate code and excessive cyclomatic complexity.
-Aposlop supports Rust, Python, TypeScript, and TSX.
+Aposlop supports Go, Rust, Python, TypeScript, and TSX.
 
 ## Select the command
 
@@ -89,6 +89,7 @@ Do not commit `.aposlop_cache`.
 
 Read `references/configuration.md` before changing thresholds, exclusions, language settings, or extension settings.
 An exclusion list replaces lower-precedence lists instead of extending them.
+Exclusion values use the same pattern syntax as one `.gitignore` line.
 
 ## Set up agent validation
 
