@@ -12,7 +12,7 @@ use crate::detection::{CloneGroup, FindingId};
 use crate::ingest::IngestDiagnostic;
 use crate::{OutputFormat, TerminalOutput};
 
-pub(crate) const REPORT_SCHEMA_VERSION: u32 = 4;
+pub(crate) const REPORT_SCHEMA_VERSION: u32 = 5;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub(crate) struct Report {
@@ -21,6 +21,7 @@ pub(crate) struct Report {
     pub(crate) duplicates: Vec<CloneGroup>,
     pub(crate) complexity: Vec<ComplexityViolation>,
     pub(crate) diagnostics: Vec<Diagnostic>,
+    pub(crate) unused_ignores: Vec<FindingId>,
 }
 impl Report {
     #[must_use]
@@ -91,7 +92,8 @@ pub(crate) fn build(
     ingestion: Vec<IngestDiagnostic>,
     cache: Vec<CacheDiagnostic>,
 ) -> Report {
-    duplicates.retain(|finding| !allow_list.contains(finding.id));
+    let mut allow_list = allow_list.usage();
+    duplicates.retain(|finding| !allow_list.allows(finding.id));
     duplicates.sort_unstable_by(|left, right| {
         left.instances
             .cmp(&right.instances)
@@ -105,7 +107,7 @@ pub(crate) fn build(
             for block in &file.blocks {
                 if block.complexity > rules.complexity_threshold {
                     let id = FindingId::for_complexity_location(&block.location);
-                    if allow_list.contains(id) {
+                    if allow_list.allows(id) {
                         continue;
                     }
                     complexity.push(ComplexityViolation {
@@ -157,6 +159,7 @@ pub(crate) fn build(
             .then(left.category.cmp(&right.category))
             .then(left.message.cmp(&right.message))
     });
+    let unused_ignores = allow_list.unused();
     let summary = Summary {
         scanned_files: files.len(),
         analyzed_blocks: files.iter().map(|file| file.blocks.len()).sum(),
@@ -169,6 +172,7 @@ pub(crate) fn build(
         duplicates,
         complexity,
         diagnostics,
+        unused_ignores,
     }
 }
 
@@ -204,5 +208,6 @@ pub(crate) fn render_ci(writer: &mut impl Write, report: &Report) -> Result<(), 
         "Complexity violations: {}",
         report.summary.complexity_violation_count
     )?;
+    writeln!(writer, "Unused ignores: {}", report.unused_ignores.len())?;
     Ok(())
 }

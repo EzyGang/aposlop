@@ -127,10 +127,10 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
     assert!(terminal.contains(&report.complexity[0].id.to_string()));
     assert!(terminal.contains("Diagnostics (0)"));
     assert!(terminal.contains("Summary"));
-    assert!(terminal.ends_with("  Complexity violations: 1\n"));
+    assert!(terminal.ends_with("\nUnused ignores (0)\n  None\n"));
     assert!(json.ends_with(b"\n"));
     let value: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(value["schema_version"], 4);
+    assert_eq!(value["schema_version"], 5);
     assert_eq!(value["duplicates"][0]["kind"], "type_1");
     assert_eq!(value["duplicates"][0]["minimum_similarity"], 1.0);
     assert_eq!(
@@ -156,6 +156,81 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
         finding_id
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_'))
+    );
+    assert_eq!(value["unused_ignores"], serde_json::json!([]));
+    Ok(())
+}
+
+#[test]
+fn report_tracks_used_and_unused_ignore_ids() -> TestResult {
+    let fixture = TempDir::new()?;
+    let duplicate = duplicate(CloneKind::Type1, "left.rs", 1, "right.rs", 1);
+    let duplicate_id = duplicate.id;
+    let complexity_id = FindingId::for_complexity_location(&location("source.rs", 1));
+    let unused_id = FindingId::for_complexity_location(&location("removed.rs", 1));
+    fs::write(
+        fixture.path().join(".aposlopignore"),
+        format!("{duplicate_id}\n{complexity_id}\n{unused_id}\n{unused_id}\n"),
+    )?;
+    let allow_list = AllowList::load(fixture.path())?;
+    let report = build(
+        &[analyzed_file("source.rs", &[4])],
+        vec![duplicate],
+        &load_config("[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3")?,
+        &allow_list,
+        Vec::new(),
+        Vec::new(),
+    );
+
+    assert!(report.duplicates.is_empty());
+    assert!(report.complexity.is_empty());
+    assert_eq!(report.unused_ignores, vec![unused_id]);
+    assert!(!report.has_findings());
+
+    let mut terminal = Vec::new();
+    render(
+        &mut terminal,
+        &report,
+        RenderOptions {
+            format: OutputFormat::Terminal,
+            terminal_output: TerminalOutput::Locations,
+            root: fixture.path(),
+            color: false,
+        },
+    )?;
+    let terminal = String::from_utf8(terminal)?;
+    let summary = terminal
+        .find("\nSummary\n")
+        .ok_or_else(|| anyhow::anyhow!("terminal report did not contain Summary"))?;
+    let unused = terminal
+        .find("\nUnused ignores (1)\n")
+        .ok_or_else(|| anyhow::anyhow!("terminal report did not contain unused ignores"))?;
+    assert!(summary < unused);
+    assert!(terminal.ends_with(&format!("  {unused_id}\n")));
+
+    let mut json = Vec::new();
+    render(
+        &mut json,
+        &report,
+        RenderOptions {
+            format: OutputFormat::Json,
+            terminal_output: TerminalOutput::Code,
+            root: fixture.path(),
+            color: false,
+        },
+    )?;
+    let value: serde_json::Value = serde_json::from_slice(&json)?;
+    assert_eq!(value["schema_version"], 5);
+    assert_eq!(
+        value["unused_ignores"],
+        serde_json::json!([unused_id.to_string()])
+    );
+
+    let mut ci = Vec::new();
+    render_ci(&mut ci, &report)?;
+    assert_eq!(
+        String::from_utf8(ci)?,
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 1\n"
     );
     Ok(())
 }
@@ -191,11 +266,11 @@ fn ci_output_is_a_compact_finding_summary() -> TestResult {
 
     assert_eq!(
         String::from_utf8(failing_output)?,
-        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 1\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 1\nUnused ignores: 0\n"
     );
     assert_eq!(
         String::from_utf8(passing_output)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
     );
     Ok(())
 }

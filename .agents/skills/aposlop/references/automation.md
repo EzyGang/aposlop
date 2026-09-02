@@ -18,6 +18,7 @@ aposlop ci .
 
 The normal terminal and JSON reports return success after completed analysis even when findings exist.
 The CI command returns failure when duplicate or complexity findings remain.
+Unused ignores are informational and do not change CI status.
 
 ## Exit codes
 
@@ -32,7 +33,7 @@ An operational failure uses the same code.
 
 ## JSON report
 
-The current JSON `schema_version` is `4`.
+The current JSON `schema_version` is `5`.
 JSON output ends with one newline.
 
 Top-level fields are:
@@ -44,6 +45,7 @@ Top-level fields are:
 | `duplicates` | Sorted duplicate groups |
 | `complexity` | Sorted complexity violations |
 | `diagnostics` | Sorted recoverable diagnostics |
+| `unused_ignores` | Sorted valid ignore IDs that match no current finding |
 
 Each duplicate group has these fields:
 
@@ -69,19 +71,23 @@ Each diagnostic has these fields:
 - `category`: `analysis`, `cache`, or `ingestion`
 - `message`: deterministic diagnostic text
 
+`unused_ignores` contains valid `.aposlopignore` IDs that matched no duplicate group or complexity violation.
+Review and remove stale IDs instead of mutating the file automatically.
+
 Check `schema_version` before consuming fields.
 Treat a new schema version as a contract change instead of guessing its structure.
 
 ## Agent investigation loop
 
 1. Run the JSON report from the configured target root.
-2. Read every diagnostic before findings.
-3. Sort work by ownership and source location, not by finding kind alone.
-4. Inspect every group instance and its complete owning block.
-5. Make the smallest behavior-preserving source change.
-6. Run the affected behavior or focused checks.
-7. Run the JSON report again.
-8. Finish with `aposlop ci .` when repository policy requires no findings.
+2. Read every diagnostic and unused ignore before findings.
+3. Remove stale ignore IDs only after confirming their findings no longer exist.
+4. Sort finding work by ownership and source location, not by finding kind alone.
+5. Inspect every group instance and its complete owning block.
+6. Make the smallest behavior-preserving source change.
+7. Run the affected behavior or focused checks.
+8. Run the JSON report again.
+9. Finish with `aposlop ci .` when repository policy requires no findings.
 
 Do not parse the human terminal layout when JSON is available.
 Do not infer that a Type-3 match has equivalent semantics.

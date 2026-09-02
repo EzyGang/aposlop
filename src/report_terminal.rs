@@ -23,6 +23,7 @@ pub(crate) fn render(
     render_complexity(writer, report, style)?;
     render_diagnostics(writer, report, style)?;
     render_summary(writer, report, style)?;
+    render_unused_ignores(writer, report, style)?;
     Ok(())
 }
 
@@ -127,6 +128,22 @@ fn render_summary(
         "  Complexity violations: {}",
         report.summary.complexity_violation_count
     )?;
+    Ok(())
+}
+
+fn render_unused_ignores(
+    writer: &mut impl Write,
+    report: &Report,
+    style: Styles,
+) -> std::io::Result<()> {
+    section(writer, "Unused ignores", report.unused_ignores.len(), style)?;
+    if report.unused_ignores.is_empty() {
+        writeln!(writer, "  None")?;
+        return Ok(());
+    }
+    for id in &report.unused_ignores {
+        writeln!(writer, "  {}{}{}", style.finding(), id, style.reset())?;
+    }
     Ok(())
 }
 

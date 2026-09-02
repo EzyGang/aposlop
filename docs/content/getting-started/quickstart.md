@@ -53,12 +53,13 @@ An omitted option preserves the resolved configuration-file value.
 
 ## Read the result
 
-The report contains four ordered sections:
+The report contains five ordered sections:
 
 1. The first section lists duplicate groups.
 2. The second section lists complexity violations.
 3. The third section lists file and cache diagnostics.
 4. The fourth section lists summary counts.
+5. The final section lists unused `.aposlopignore` IDs.
 
 Findings keep exit code `0`.
 Use the report data rather than the process status to enforce project-specific thresholds.

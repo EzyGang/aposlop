@@ -59,7 +59,7 @@ fn five_duplicates_render_as_one_group() -> TestResult {
         &mut json,
     )?;
     let report: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(report["schema_version"], 4);
+    assert_eq!(report["schema_version"], 5);
     assert_eq!(report["summary"]["duplicate_count"], 1);
     assert_eq!(
         report["duplicates"][0]["instances"]
@@ -168,6 +168,25 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
     let report: serde_json::Value = serde_json::from_slice(&suppressed)?;
     assert_eq!(report["summary"]["duplicate_count"], 0);
     assert_eq!(report["summary"]["complexity_violation_count"], 5);
+    assert_eq!(report["unused_ignores"], serde_json::json!([]));
+
+    let mut disabled = Vec::new();
+    run(
+        Cli::try_parse_from([
+            "aposlop",
+            target.as_str(),
+            "--format",
+            "json",
+            "--type-1",
+            "false",
+        ])?,
+        &mut disabled,
+    )?;
+    let disabled: serde_json::Value = serde_json::from_slice(&disabled)?;
+    assert_eq!(
+        disabled["unused_ignores"],
+        serde_json::json!([finding.clone()])
+    );
 
     for complexity_id in &complexity_ids {
         run(
@@ -180,6 +199,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
     let report: serde_json::Value = serde_json::from_slice(&fully_suppressed)?;
     assert_eq!(report["summary"]["duplicate_count"], 0);
     assert_eq!(report["summary"]["complexity_violation_count"], 0);
+    assert_eq!(report["unused_ignores"], serde_json::json!([]));
 
     fs::write(
         fixture.path().join(".aposlopignore"),
@@ -215,7 +235,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Findings);
     assert_eq!(
         String::from_utf8(failing)?,
-        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 0\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 0\nUnused ignores: 0\n"
     );
 
     let mut overridden = Vec::new();
@@ -226,7 +246,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(overridden)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
     );
 
     fs::remove_file(fixture.path().join("right.rs"))?;
@@ -235,7 +255,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(passing)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
     );
     Ok(())
 }

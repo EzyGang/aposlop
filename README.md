@@ -317,6 +317,8 @@ aposlop allow aB7_x
 
 The command writes the ID to `.aposlopignore`.
 Delete the ID from that file to restore the finding.
+Aposlop reports valid IDs that match no current finding as unused ignores at the end of each report.
+Unused ignores do not change the process exit code.
 
 ---
 

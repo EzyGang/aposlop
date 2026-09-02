@@ -7,11 +7,12 @@ JSON output ends with one newline.
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | The report schema version is `4`. |
+| `schema_version` | The report schema version is `5`. |
 | `summary` | Aggregate file, block, duplicate-group, and complexity counts. |
 | `duplicates` | Sorted duplicate groups. |
 | `complexity` | Sorted complexity violations. |
 | `diagnostics` | Sorted recoverable diagnostics. |
+| `unused_ignores` | Sorted valid ignore IDs that match no current finding. |
 
 ## Duplicate group fields
 
@@ -44,11 +45,17 @@ Each diagnostic contains these fields:
 - `category` contains `analysis`, `cache`, or `ingestion`.
 - `message` contains deterministic diagnostic text.
 
+## Unused ignores
+
+`unused_ignores` contains finding IDs from `.aposlopignore` that matched no duplicate group or complexity violation.
+The array is empty when every configured ID suppresses a current finding.
+Unused ignores are informational and do not change the process exit code.
+
 ## Example
 
 ```json
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "summary": {
     "scanned_files": 3,
     "analyzed_blocks": 3,
@@ -91,6 +98,7 @@ Each diagnostic contains these fields:
       "threshold": 15
     }
   ],
-  "diagnostics": []
+  "diagnostics": [],
+  "unused_ignores": ["z9_Xq"]
 }
 ```
