@@ -4,6 +4,9 @@ min_nodes = 30
 exclude = ["tests/", "src/tests/", "vendor/", "node_modules/", "target/"]
 use_cache = true
 
+[languages.rust]
+min_lines = 6
+
 [duplicates_detection]
 type_1 = true
 type_2 = true
