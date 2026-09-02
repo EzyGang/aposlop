@@ -61,7 +61,6 @@ docs/_build/
 target/
 
 # Aposlop local state
-.aposlopignore
 .aposlop_cache
 
 # pyenv

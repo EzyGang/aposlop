@@ -8,7 +8,7 @@ use crate::analysis::{
     AnalysisDiagnostic, AnalysisDiagnosticKind, AnalyzedBlock, AnalyzedFile, SourceLocation,
 };
 use crate::cache::CacheDiagnostic;
-use crate::detection::{CloneKind, CloneMatch, FindingId};
+use crate::detection::{CloneGroup, CloneKind, FindingId};
 use crate::ingest::{FileIdentity, IngestDiagnostic};
 use crate::language::LanguageId;
 use crate::report::{
@@ -118,11 +118,11 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
     )?;
 
     let terminal = String::from_utf8(terminal)?;
-    assert!(terminal.contains("Duplicates (1)"));
+    assert!(terminal.contains("Duplicate groups (1)"));
     assert!(terminal.contains("left.rs:1"));
     assert!(terminal.contains("lines 1–5 (5 lines)"));
     assert!(terminal.contains(&report.duplicates[0].id.to_string()));
-    assert!(!terminal.contains("Type1"));
+    assert!(terminal.contains("Type-1"));
     assert!(terminal.contains("Complexity (1)"));
     assert!(terminal.contains(&report.complexity[0].id.to_string()));
     assert!(terminal.contains("Diagnostics (0)"));
@@ -130,8 +130,18 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
     assert!(terminal.ends_with("  Complexity violations: 1\n"));
     assert!(json.ends_with(b"\n"));
     let value: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(value["schema_version"], REPORT_SCHEMA_VERSION);
+    assert_eq!(value["schema_version"], 4);
     assert_eq!(value["duplicates"][0]["kind"], "type_1");
+    assert_eq!(value["duplicates"][0]["minimum_similarity"], 1.0);
+    assert_eq!(
+        value["duplicates"][0]["instances"].as_array().map(Vec::len),
+        Some(2)
+    );
+    assert!(
+        !value["duplicates"][0].as_object().is_some_and(
+            |duplicate| duplicate.contains_key("left") || duplicate.contains_key("right")
+        )
+    );
     assert_eq!(value["summary"]["duplicate_count"], 1);
     assert_eq!(
         value["complexity"][0]["id"],
@@ -181,23 +191,34 @@ fn ci_output_is_a_compact_finding_summary() -> TestResult {
 
     assert_eq!(
         String::from_utf8(failing_output)?,
-        "Aposlop CI: failed\nDuplicate findings: 1\nComplexity violations: 1\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 1\n"
     );
     assert_eq!(
         String::from_utf8(passing_output)?,
-        "Aposlop CI: passed\nDuplicate findings: 0\nComplexity violations: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\n"
     );
     Ok(())
 }
 
 #[test]
-fn finding_ids_are_deterministic_and_order_independent() -> TestResult {
+fn finding_ids_are_deterministic_and_membership_sensitive() -> TestResult {
     let left = location("src/left.rs", 10);
     let right = location("src/right.rs", 20);
-    let id = FindingId::for_duplicate_locations(&left, &right);
+    let third = location("src/third.rs", 30);
+    let id = FindingId::for_duplicate_locations(&[left.clone(), right.clone()]);
 
-    assert_eq!(id, FindingId::for_duplicate_locations(&left, &right));
-    assert_eq!(id, FindingId::for_duplicate_locations(&right, &left));
+    assert_eq!(
+        id,
+        FindingId::for_duplicate_locations(&[left.clone(), right.clone()])
+    );
+    assert_eq!(
+        id,
+        FindingId::for_duplicate_locations(&[right.clone(), left.clone()])
+    );
+    assert_ne!(
+        id,
+        FindingId::for_duplicate_locations(&[left.clone(), right, third])
+    );
     let complexity_id = FindingId::for_complexity_location(&left);
     assert_eq!(complexity_id, FindingId::for_complexity_location(&left));
     assert_ne!(id, complexity_id);
@@ -209,7 +230,7 @@ fn finding_ids_are_deterministic_and_order_independent() -> TestResult {
 }
 
 #[test]
-fn terminal_code_output_prints_both_duplicate_ranges() -> TestResult {
+fn terminal_code_output_prints_every_duplicate_instance() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(
         fixture.path().join("left.rs"),
@@ -241,8 +262,8 @@ fn terminal_code_output_prints_both_duplicate_ranges() -> TestResult {
     )?;
 
     let output = String::from_utf8(output)?;
-    assert!(output.contains("  Left code\n    1 │ fn left() {"));
-    assert!(output.contains("  Right code\n    1 │ fn right() {"));
+    assert!(output.contains("  Instance 1 code\n    1 │ fn left() {"));
+    assert!(output.contains("  Instance 2 code\n    1 │ fn right() {"));
     Ok(())
 }
 
@@ -282,15 +303,16 @@ fn duplicate(
     left_line: usize,
     right_path: &str,
     right_line: usize,
-) -> CloneMatch {
-    let left = location(left_path, left_line);
-    let right = location(right_path, right_line);
-    CloneMatch {
+) -> CloneGroup {
+    let instances = vec![
+        location(left_path, left_line),
+        location(right_path, right_line),
+    ];
+    CloneGroup {
         kind,
-        similarity: 1.0,
-        id: FindingId::for_duplicate_locations(&left, &right),
-        left,
-        right,
+        minimum_similarity: 1.0,
+        id: FindingId::for_duplicate_locations(&instances),
+        instances,
     }
 }
 

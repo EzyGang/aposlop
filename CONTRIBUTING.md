@@ -20,6 +20,15 @@ cd aposlop
 cargo build
 ```
 
+Run the repository's Aposlop analysis:
+
+```bash
+cargo run -- .
+```
+
+The `--` separator passes `.` to Aposlop instead of Cargo.
+Use `make aposlop` to run the same command.
+
 ## Make a change
 
 Follow the existing code and test patterns.

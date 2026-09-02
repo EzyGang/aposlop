@@ -8,17 +8,17 @@ use crate::allow_list::AllowList;
 use crate::analysis::{AnalysisDiagnosticKind, AnalyzedFile, SourceLocation};
 use crate::cache::CacheDiagnostic;
 use crate::config::Config;
-use crate::detection::{CloneMatch, FindingId};
+use crate::detection::{CloneGroup, FindingId};
 use crate::ingest::IngestDiagnostic;
 use crate::{OutputFormat, TerminalOutput};
 
-pub(crate) const REPORT_SCHEMA_VERSION: u32 = 3;
+pub(crate) const REPORT_SCHEMA_VERSION: u32 = 4;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub(crate) struct Report {
     pub(crate) schema_version: u32,
     pub(crate) summary: Summary,
-    pub(crate) duplicates: Vec<CloneMatch>,
+    pub(crate) duplicates: Vec<CloneGroup>,
     pub(crate) complexity: Vec<ComplexityViolation>,
     pub(crate) diagnostics: Vec<Diagnostic>,
 }
@@ -85,7 +85,7 @@ pub(crate) enum ReportError {
 #[must_use]
 pub(crate) fn build(
     files: &[AnalyzedFile],
-    mut duplicates: Vec<CloneMatch>,
+    mut duplicates: Vec<CloneGroup>,
     config: &Config,
     allow_list: &AllowList,
     ingestion: Vec<IngestDiagnostic>,
@@ -93,9 +93,8 @@ pub(crate) fn build(
 ) -> Report {
     duplicates.retain(|finding| !allow_list.contains(finding.id));
     duplicates.sort_unstable_by(|left, right| {
-        left.left
-            .cmp(&right.left)
-            .then(left.right.cmp(&right.right))
+        left.instances
+            .cmp(&right.instances)
             .then(left.kind.cmp(&right.kind))
     });
     let mut complexity = Vec::new();
@@ -197,7 +196,7 @@ pub(crate) fn render_ci(writer: &mut impl Write, report: &Report) -> Result<(), 
     writeln!(writer, "Aposlop CI: {status}")?;
     writeln!(
         writer,
-        "Duplicate findings: {}",
+        "Duplicate groups: {}",
         report.summary.duplicate_count
     )?;
     writeln!(

@@ -32,7 +32,7 @@ An operational failure uses the same code.
 
 ## JSON report
 
-The current JSON `schema_version` is `3`.
+The current JSON `schema_version` is `4`.
 JSON output ends with one newline.
 
 Top-level fields are:
@@ -40,19 +40,20 @@ Top-level fields are:
 | Field | Meaning |
 | --- | --- |
 | `schema_version` | Report contract version |
-| `summary` | Aggregate file, block, duplicate, and complexity counts |
-| `duplicates` | Sorted duplicate findings |
+| `summary` | Aggregate file, block, duplicate-group, and complexity counts |
+| `duplicates` | Sorted duplicate groups |
 | `complexity` | Sorted complexity violations |
 | `diagnostics` | Sorted recoverable diagnostics |
 
-Each duplicate has these fields:
+Each duplicate group has these fields:
 
-- `id`: deterministic ID accepted by `aposlop allow`
-- `kind`: `type_1`, `type_2`, or `type_3`
-- `similarity`: exact or verified Jaccard similarity
-- `left`: first source location
-- `right`: second source location
+- `id`: deterministic group ID accepted by `aposlop allow`
+- `kind`: broadest connecting relation, as `type_1`, `type_2`, or `type_3`
+- `minimum_similarity`: lowest accepted relation similarity in the group
+- `instances`: every source location in deterministic order
 
+Type-3 groups are connected components.
+Do not assume that every instance pair in one Type-3 group meets the similarity threshold.
 Each location contains a target-relative `path` and one-based `start_line` and `end_line` values.
 
 Each complexity violation has these fields:
@@ -76,7 +77,7 @@ Treat a new schema version as a contract change instead of guessing its structur
 1. Run the JSON report from the configured target root.
 2. Read every diagnostic before findings.
 3. Sort work by ownership and source location, not by finding kind alone.
-4. Inspect both duplicate locations and the complete owning blocks.
+4. Inspect every group instance and its complete owning block.
 5. Make the smallest behavior-preserving source change.
 6. Run the affected behavior or focused checks.
 7. Run the JSON report again.

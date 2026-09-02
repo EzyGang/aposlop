@@ -7,21 +7,23 @@ JSON output ends with one newline.
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | The report schema version is `3`. |
-| `summary` | Aggregate file, block, duplicate, and complexity counts. |
-| `duplicates` | Sorted duplicate matches. |
+| `schema_version` | The report schema version is `4`. |
+| `summary` | Aggregate file, block, duplicate-group, and complexity counts. |
+| `duplicates` | Sorted duplicate groups. |
 | `complexity` | Sorted complexity violations. |
 | `diagnostics` | Sorted recoverable diagnostics. |
 
-## Duplicate fields
+## Duplicate group fields
 
-Each duplicate match contains these fields:
+Each duplicate group contains these fields:
 
 - `id` contains the deterministic finding ID accepted by `aposlop allow`.
 - `kind` contains `type_1`, `type_2`, or `type_3`.
-- `similarity` contains exact or verified Jaccard similarity.
-- `left` contains the first source location.
-- `right` contains the second source location.
+- `minimum_similarity` contains the lowest accepted relation similarity in the group.
+- `instances` contains every source location in deterministic order.
+
+The group kind is the broadest relation required to connect its instances.
+Type-3 groups are connected components and do not guarantee that every instance pair meets the threshold.
 
 Each location contains a path relative to the target directory and one-based line numbers.
 
@@ -46,10 +48,10 @@ Each diagnostic contains these fields:
 
 ```json
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "summary": {
-    "scanned_files": 2,
-    "analyzed_blocks": 2,
+    "scanned_files": 3,
+    "analyzed_blocks": 3,
     "duplicate_count": 1,
     "complexity_violation_count": 1
   },
@@ -57,17 +59,24 @@ Each diagnostic contains these fields:
     {
       "id": "aB7_x",
       "kind": "type_1",
-      "similarity": 1.0,
-      "left": {
-        "path": "src/left.rs",
-        "start_line": 1,
-        "end_line": 6
-      },
-      "right": {
-        "path": "src/right.rs",
-        "start_line": 1,
-        "end_line": 6
-      }
+      "minimum_similarity": 1.0,
+      "instances": [
+        {
+          "path": "src/first.rs",
+          "start_line": 1,
+          "end_line": 6
+        },
+        {
+          "path": "src/second.rs",
+          "start_line": 1,
+          "end_line": 6
+        },
+        {
+          "path": "src/third.rs",
+          "start_line": 1,
+          "end_line": 6
+        }
+      ]
     }
   ],
   "complexity": [

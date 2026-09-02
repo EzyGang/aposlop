@@ -55,7 +55,7 @@ An omitted option preserves the resolved configuration-file value.
 
 The report contains four ordered sections:
 
-1. The first section lists duplicate matches.
+1. The first section lists duplicate groups.
 2. The second section lists complexity violations.
 3. The third section lists file and cache diagnostics.
 4. The fourth section lists summary counts.

@@ -1,0 +1,15 @@
+[core]
+min_lines = 5
+min_nodes = 30
+exclude = ["tests/", "src/tests/", "vendor/", "node_modules/", "target/"]
+use_cache = true
+
+[duplicates_detection]
+type_1 = true
+type_2 = true
+type_3 = true
+type_3_threshold = 0.90
+
+[metrics]
+calculate_complexity = true
+complexity_threshold = 15

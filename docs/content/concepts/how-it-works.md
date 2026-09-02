@@ -37,10 +37,10 @@ Aposlop keeps valid blocks and reports one file diagnostic.
 ## Canonical and normalized streams
 
 The canonical stream ignores whitespace and comments while preserving identifiers and literals.
-Equal canonical streams produce Type-1 duplicate matches.
+Equal canonical streams produce Type-1 duplicate relations.
 
 The normalized stream replaces identifiers and literals with category markers.
-Equal normalized streams produce Type-2 duplicate matches when canonical streams differ.
+Equal normalized streams produce Type-2 duplicate relations when canonical streams differ.
 
 ## Type-3 similarity join
 
@@ -53,6 +53,12 @@ Positional filtering rejects candidate pairs that cannot accumulate enough remai
 
 Aposlop verifies every surviving candidate pair with exact Jaccard similarity.
 These filters preserve every threshold-qualified block pair.
+
+## Duplicate grouping
+
+Aposlop joins enabled duplicate relations with a union-find structure.
+Each connected component becomes one duplicate group.
+The group retains its broadest relation type and minimum accepted relation similarity.
 
 ## Complexity
 
@@ -72,5 +78,5 @@ Aposlop replaces the cache atomically after successful output.
 
 ## Deterministic reports
 
-Aposlop sorts files, blocks, duplicate matches, complexity violations, and diagnostics.
+Aposlop sorts files, blocks, duplicate groups, complexity violations, and diagnostics.
 Terminal and JSON output use the same report data.

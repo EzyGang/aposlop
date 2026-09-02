@@ -90,7 +90,7 @@ Run a concise finding check for CI:
 aposlop ci .
 ```
 
-Disable Type-2 duplicate matches and the cache for one run:
+Disable Type-2 duplicate relations and the cache for one run:
 
 ```bash
 aposlop . --type-2 false --use-cache false

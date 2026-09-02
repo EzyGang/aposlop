@@ -1,14 +1,15 @@
 use std::collections::HashSet;
 
+use super::super::groups::GroupBuilder;
 use super::super::shingles::jaccard;
-use super::super::{CloneKind, CloneMatch, EligibleBlock, Pair};
+use super::super::{CloneKind, EligibleBlock, Pair};
 
 pub(super) fn verify_pair(
     blocks: &[EligibleBlock<'_>],
     pair: Pair,
     threshold: f64,
     classified: &mut HashSet<Pair>,
-    matches: &mut Vec<CloneMatch>,
+    groups: &mut GroupBuilder,
 ) {
     if classified.contains(&pair) {
         return;
@@ -23,10 +24,5 @@ pub(super) fn verify_pair(
     }
 
     classified.insert(pair);
-    matches.push(CloneMatch::new(
-        CloneKind::Type3,
-        similarity,
-        left.block,
-        right.block,
-    ));
+    groups.add(pair, CloneKind::Type3, similarity);
 }

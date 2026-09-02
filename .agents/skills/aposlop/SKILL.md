@@ -111,14 +111,16 @@ Inspect the complete report when the concise CI output does not explain the fail
 
 Treat each finding as evidence to inspect, not an automatic refactoring order.
 
-For duplicate findings:
+For duplicate groups:
 
-- Type-1 means the canonical syntax is identical.
-- Type-2 means identifiers or literals differ after normalization.
-- Type-3 means token shingles passed verified Jaccard similarity.
-- Compare behavior, ownership, and change cadence before extracting shared code.
+- Type-1 means every connecting relation has identical canonical syntax.
+- Type-2 means at least one connecting relation requires identifier or literal normalization.
+- Type-3 means at least one connecting relation passed verified Jaccard similarity.
+- The minimum similarity is the lowest accepted relation similarity in the group.
+- A Type-3 group can contain instances that do not match each other directly.
+- Compare every instance's behavior, ownership, and change cadence before extracting shared code.
 - Prefer deleting accidental copies or reusing an existing owner.
-- Do not create a shared abstraction when two blocks only look similar.
+- Do not create a shared abstraction when grouped blocks only look similar.
 
 For complexity findings:
 
@@ -126,7 +128,7 @@ For complexity findings:
 - Use guard clauses, separate responsibilities, or simpler state transitions when behavior permits.
 - Preserve behavior and rerun the affected scenario before accepting the result.
 
-Show source for both sides of duplicate findings:
+Show source for every instance in each duplicate group:
 
 ```bash
 aposlop . --terminal-output code

@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
-use super::super::{BlockId, CloneMatch, EligibleBlock, Pair};
+use super::super::groups::GroupBuilder;
+use super::super::{BlockId, EligibleBlock, Pair};
 use super::ThresholdGroup;
 use super::verify::verify_pair;
 
@@ -23,11 +24,11 @@ pub(super) fn join_groups(
     right: &ThresholdGroup,
     same_group: bool,
     classified: &mut HashSet<Pair>,
-    matches: &mut Vec<CloneMatch>,
+    groups: &mut GroupBuilder,
 ) {
     let threshold = left.threshold.max(right.threshold);
     if threshold == 0.0 {
-        join_all_pairs(blocks, left, right, same_group, classified, matches);
+        join_all_pairs(blocks, left, right, same_group, classified, groups);
         return;
     }
 
@@ -87,7 +88,7 @@ pub(super) fn join_groups(
 
     for (pair, state) in candidates {
         if !state.pruned {
-            verify_pair(blocks, pair, threshold, classified, matches);
+            verify_pair(blocks, pair, threshold, classified, groups);
         }
     }
 }
@@ -98,7 +99,7 @@ fn join_all_pairs(
     right: &ThresholdGroup,
     same_group: bool,
     classified: &mut HashSet<Pair>,
-    matches: &mut Vec<CloneMatch>,
+    groups: &mut GroupBuilder,
 ) {
     for &left_id in &left.ids {
         for &right_id in &right.ids {
@@ -110,7 +111,7 @@ fn join_all_pairs(
                 Pair::new(left_id, right_id),
                 0.0,
                 classified,
-                matches,
+                groups,
             );
         }
     }

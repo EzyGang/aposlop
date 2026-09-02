@@ -1,9 +1,9 @@
 mod exact;
+mod groups;
 pub(crate) mod shingles;
 mod similarity_join;
 
-use std::fmt;
-use std::str::FromStr;
+use std::{collections::HashSet, fmt, str::FromStr};
 
 use serde::{Serialize, Serializer};
 use thiserror::Error;
@@ -35,13 +35,22 @@ pub(crate) enum CloneKind {
     Type3,
 }
 
+impl CloneKind {
+    pub(crate) const fn label(self) -> &'static str {
+        match self {
+            Self::Type1 => "Type-1",
+            Self::Type2 => "Type-2",
+            Self::Type3 => "Type-3",
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub(crate) struct CloneMatch {
+pub(crate) struct CloneGroup {
     pub(crate) id: FindingId,
     pub(crate) kind: CloneKind,
-    pub(crate) similarity: f64,
-    pub(crate) left: SourceLocation,
-    pub(crate) right: SourceLocation,
+    pub(crate) minimum_similarity: f64,
+    pub(crate) instances: Vec<SourceLocation>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -55,15 +64,24 @@ pub(super) struct EligibleBlock<'a> {
 }
 
 #[must_use]
-pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneMatch> {
+pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneGroup> {
     let blocks = eligible_blocks(files, config);
-    let exact::ExactResult {
-        mut classified,
-        mut matches,
-    } = exact::classify(&blocks);
-    similarity_join::classify(&blocks, &mut classified, &mut matches);
-    sort_matches(&mut matches);
-    matches
+    classify(&blocks).finish(&blocks)
+}
+
+#[cfg(test)]
+#[must_use]
+pub(crate) fn detected_relation_count(files: &[AnalyzedFile], config: &Config) -> usize {
+    let blocks = eligible_blocks(files, config);
+    classify(&blocks).relation_count()
+}
+
+fn classify(blocks: &[EligibleBlock<'_>]) -> groups::GroupBuilder {
+    let mut classified = HashSet::new();
+    let mut groups = groups::GroupBuilder::new(blocks.len());
+    exact::classify(blocks, &mut classified, &mut groups);
+    similarity_join::classify(blocks, &mut classified, &mut groups);
+    groups
 }
 
 fn eligible_blocks<'a>(files: &'a [AnalyzedFile], config: &Config) -> Vec<EligibleBlock<'a>> {
@@ -96,15 +114,6 @@ fn eligible_blocks<'a>(files: &'a [AnalyzedFile], config: &Config) -> Vec<Eligib
         .collect()
 }
 
-fn sort_matches(matches: &mut [CloneMatch]) {
-    matches.sort_unstable_by(|left, right| {
-        left.kind
-            .cmp(&right.kind)
-            .then(left.left.cmp(&right.left))
-            .then(left.right.cmp(&right.right))
-    });
-}
-
 impl Pair {
     fn new(left: BlockId, right: BlockId) -> Self {
         if left < right {
@@ -122,16 +131,15 @@ const FINDING_ID_SPACE: u128 = 62 * 64 * 64 * 64 * 64;
 
 impl FindingId {
     #[must_use]
-    pub(crate) fn for_duplicate_locations(left: &SourceLocation, right: &SourceLocation) -> Self {
-        let (left, right) = if left <= right {
-            (left, right)
-        } else {
-            (right, left)
-        };
+    pub(crate) fn for_duplicate_locations(locations: &[SourceLocation]) -> Self {
+        let mut locations: Vec<_> = locations.iter().collect();
+        locations.sort_unstable();
         let mut hash = Xxh3::new();
-        hash.update(b"aposlop duplicate finding v1\0");
-        hash_location(&mut hash, left);
-        hash_location(&mut hash, right);
+        hash.update(b"aposlop duplicate group finding v1\0");
+        for location in locations {
+            hash_location(&mut hash, location);
+            hash.update(&[u8::MAX]);
+        }
         Self((hash.digest128() % FINDING_ID_SPACE) as u32)
     }
 
@@ -203,14 +211,14 @@ impl Serialize for FindingId {
     }
 }
 
-impl CloneMatch {
-    fn new(kind: CloneKind, similarity: f64, left: &AnalyzedBlock, right: &AnalyzedBlock) -> Self {
+impl CloneGroup {
+    fn new(kind: CloneKind, minimum_similarity: f64, mut instances: Vec<SourceLocation>) -> Self {
+        instances.sort_unstable();
         Self {
-            id: FindingId::for_duplicate_locations(&left.location, &right.location),
+            id: FindingId::for_duplicate_locations(&instances),
             kind,
-            similarity,
-            left: left.location.clone(),
-            right: right.location.clone(),
+            minimum_similarity,
+            instances,
         }
     }
 }

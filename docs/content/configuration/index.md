@@ -56,9 +56,9 @@ Extension tables can set these fields:
 
 - `min_lines` sets the minimum line count.
 - `min_nodes` sets the minimum named-node count.
-- `type_1` enables Type-1 duplicate matches.
-- `type_2` enables Type-2 duplicate matches.
-- `type_3` enables Type-3 duplicate matches.
+- `type_1` enables Type-1 duplicate relations.
+- `type_2` enables Type-2 duplicate relations.
+- `type_3` enables Type-3 duplicate relations.
 - `type_3_threshold` sets the Type-3 Jaccard threshold.
 - `calculate_complexity` enables complexity violations.
 - `complexity_threshold` sets the complexity threshold.
