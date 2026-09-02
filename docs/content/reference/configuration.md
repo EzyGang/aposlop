@@ -8,8 +8,12 @@ Aposlop deserializes `.aposlop.toml` into typed sections and rejects unknown fie
 | --- | --- | --- | --- |
 | `min_lines` | Positive integer | `5` | Must be greater than zero. |
 | `min_nodes` | Positive integer | `30` | Must be greater than zero. |
-| `exclude` | Array of relative paths | `tests/`, `vendor/`, `node_modules/`, `target/` | Paths cannot be absolute or contain `..`. |
+| `exclude` | Array of gitignore-style patterns | `tests/`, `vendor/`, `node_modules/`, `target/` | Each value follows `.gitignore` pattern syntax. |
 | `use_cache` | Boolean | `true` | Global only. |
+
+A directory pattern without a leading slash matches that directory name at any depth.
+Use a leading `/` to anchor a pattern to the target root.
+Use `**` to match across directory boundaries.
 
 ## `[duplicates_detection]`
 
@@ -31,6 +35,7 @@ Aposlop deserializes `.aposlop.toml` into typed sections and rejects unknown fie
 
 Aposlop supports these language names:
 
+- Use `go` for Go files.
 - Use `rust` for Rust files.
 - Use `python` for Python files.
 - Use `typescript` for TypeScript and TSX files.
@@ -50,7 +55,7 @@ Each language table accepts these optional fields:
 
 ## `[extensions.<extension>]`
 
-Supported extensions are `rs`, `py`, `ts`, and `tsx`.
+Supported extensions are `go`, `rs`, `py`, `ts`, and `tsx`.
 Use keys without a leading dot.
 Extension tables accept the same fields as language tables.
 

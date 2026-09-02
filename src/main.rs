@@ -95,8 +95,8 @@ struct Cli {
     #[arg(long, value_name = "N", global = true)]
     min_nodes: Option<usize>,
 
-    /// Replace configured root-relative exclusion regular expressions.
-    #[arg(long, value_name = "REGEX", global = true)]
+    /// Replace configured gitignore-style exclusion patterns.
+    #[arg(long, value_name = "GLOB", global = true)]
     exclude: Vec<String>,
 
     /// Enable or disable the analysis cache.

@@ -23,7 +23,7 @@ aposlop . --format json
 
 ## What Aposlop scans
 
-Aposlop discovers `.rs`, `.py`, `.ts`, and `.tsx` files.
+Aposlop discovers `.go`, `.rs`, `.py`, `.ts`, and `.tsx` files.
 Aposlop respects standard ignore files and configured exclusions.
 Aposlop keeps unsupported extensions out of analysis and the cache.
 

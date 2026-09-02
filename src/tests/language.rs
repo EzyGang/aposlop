@@ -8,6 +8,10 @@ fn supported_extensions_select_expected_providers() -> TestResult {
     let registry = LanguageRegistry::compile()?;
 
     assert_eq!(
+        registry.get("go").map(|value| value.id),
+        Some(LanguageId::Go)
+    );
+    assert_eq!(
         registry.get("rs").map(|value| value.id),
         Some(LanguageId::Rust)
     );
@@ -23,7 +27,6 @@ fn supported_extensions_select_expected_providers() -> TestResult {
         registry.get("tsx").map(|value| value.id),
         Some(LanguageId::TypeScript)
     );
-    assert!(registry.get("go").is_none());
     assert!(registry.get("jsx").is_none());
     Ok(())
 }
@@ -32,7 +35,7 @@ fn supported_extensions_select_expected_providers() -> TestResult {
 fn every_embedded_query_compiles_for_each_grammar() -> TestResult {
     let registry = LanguageRegistry::compile()?;
 
-    for extension in ["rs", "py", "ts", "tsx"] {
+    for extension in ["go", "rs", "py", "ts", "tsx"] {
         let Some(compiled) = registry.get(extension) else {
             anyhow::bail!("missing provider for .{extension}");
         };

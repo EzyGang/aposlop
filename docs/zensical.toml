@@ -23,6 +23,7 @@ nav = [
   ] },
   { "Languages" = [
     { "Overview" = "languages/index.md" },
+    { "Go" = "languages/go.md" },
     { "Rust" = "languages/rust.md" },
     { "Python" = "languages/python.md" },
     { "TypeScript and TSX" = "languages/typescript.md" },

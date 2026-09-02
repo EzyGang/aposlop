@@ -17,21 +17,21 @@ Ignore rules keep matching supported files out of analysis and the cache.
 
 ## Configured exclusions
 
-`core.exclude` contains paths relative to the target directory:
+`core.exclude` contains gitignore-style patterns.
+Each array value uses the same syntax as one `.gitignore` line.
 
 ```toml
 [core]
-exclude = ["fixtures/", "generated/", "third_party/"]
+exclude = [
+    "tests/",
+    "/generated/",
+    "**/fixtures/**",
+]
 ```
 
-Directory exclusions skip the complete subtree.
-File exclusions skip the selected path.
-
-Aposlop rejects these exclusion paths:
-
-- Aposlop rejects absolute paths.
-- Aposlop rejects paths containing `..`.
-- Aposlop rejects paths that otherwise escape the target directory.
+`tests/` excludes directories with that name at any depth.
+`/generated/` excludes only the target root's `generated` directory.
+`**/fixtures/**` excludes files and directories below matching `fixtures` directories.
 
 ## Command-line exclusions
 
@@ -39,8 +39,8 @@ Repeat `--exclude` to define one replacement list:
 
 ```bash
 aposlop . \
-  --exclude fixtures/ \
-  --exclude generated/
+  --exclude 'tests/' \
+  --exclude '**/fixtures/**'
 ```
 
 The command-line list replaces `core.exclude` for that run.
