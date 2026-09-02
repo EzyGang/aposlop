@@ -5,14 +5,9 @@ impl Default for CoreConfig {
         Self {
             min_lines: 5,
             min_nodes: 30,
-            exclude: [
-                r"(^|/)tests(?:/|$)",
-                r"(^|/)vendor(?:/|$)",
-                r"(^|/)node_modules(?:/|$)",
-                r"(^|/)target(?:/|$)",
-            ]
-            .map(str::to_owned)
-            .to_vec(),
+            exclude: ["tests/", "vendor/", "node_modules/", "target/"]
+                .map(str::to_owned)
+                .to_vec(),
             use_cache: true,
         }
     }

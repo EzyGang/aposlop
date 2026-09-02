@@ -36,7 +36,7 @@ fn discovery_respects_ignores_excludes_and_supported_extensions() -> TestResult 
     )?;
     fs::write(fixture.path().join("notes.txt"), "unsupported\n")?;
 
-    let config = load_config("[core]\nexclude = [\"^generated(?:/|$)\", \"(^|/)tests(?:/|$)\"]")?;
+    let config = load_config("[core]\nexclude = [\"generated/\", \"**/tests/**\"]")?;
     let registry = LanguageRegistry::compile()?;
     let discovery = discover(fixture.path(), &config, &registry)?;
     let paths: Vec<_> = discovery

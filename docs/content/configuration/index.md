@@ -9,7 +9,7 @@ Aposlop uses built-in defaults when the file does not exist.
 [core]
 min_lines = 5
 min_nodes = 30
-exclude = ["(^|/)tests(?:/|$)", "(^|/)vendor(?:/|$)", "(^|/)node_modules(?:/|$)", "(^|/)target(?:/|$)"]
+exclude = ["tests/", "vendor/", "node_modules/", "target/"]
 use_cache = true
 
 [duplicates_detection]

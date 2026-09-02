@@ -17,22 +17,21 @@ Ignore rules keep matching supported files out of analysis and the cache.
 
 ## Configured exclusions
 
-`core.exclude` contains [Rust regular expressions](https://docs.rs/regex/latest/regex/#syntax).
-Aposlop matches each expression against the complete root-relative path.
-Aposlop normalizes path separators to `/` before matching.
-Regular expressions use unanchored search unless they contain anchors such as `^` or `$`.
+`core.exclude` contains gitignore-style patterns.
+Each array value uses the same syntax as one `.gitignore` line.
 
 ```toml
 [core]
 exclude = [
-    "(^|/)fixtures(?:/|$)",
-    "^generated/",
-    "(^|/)third_party(?:/|$)",
+    "tests/",
+    "/generated/",
+    "**/fixtures/**",
 ]
 ```
 
-A directory-boundary expression excludes the matching directory and its complete subtree.
-An invalid regular expression stops configuration loading.
+`tests/` excludes directories with that name at any depth.
+`/generated/` excludes only the target root's `generated` directory.
+`**/fixtures/**` excludes files and directories below matching `fixtures` directories.
 
 ## Command-line exclusions
 
@@ -40,8 +39,8 @@ Repeat `--exclude` to define one replacement list:
 
 ```bash
 aposlop . \
-  --exclude '(^|/)fixtures(?:/|$)' \
-  --exclude '^generated/'
+  --exclude 'tests/' \
+  --exclude '**/fixtures/**'
 ```
 
 The command-line list replaces `core.exclude` for that run.

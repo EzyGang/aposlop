@@ -8,11 +8,12 @@ Aposlop deserializes `.aposlop.toml` into typed sections and rejects unknown fie
 | --- | --- | --- | --- |
 | `min_lines` | Positive integer | `5` | Must be greater than zero. |
 | `min_nodes` | Positive integer | `30` | Must be greater than zero. |
-| `exclude` | Array of Rust regular expressions | Directory-boundary expressions for `tests`, `vendor`, `node_modules`, and `target` | Each expression must compile. |
+| `exclude` | Array of gitignore-style patterns | `tests/`, `vendor/`, `node_modules/`, `target/` | Each value follows `.gitignore` pattern syntax. |
 | `use_cache` | Boolean | `true` | Global only. |
 
-Aposlop matches exclusion expressions against complete root-relative paths with `/` separators.
-Matching is unanchored unless the expression contains anchors.
+A directory pattern without a leading slash matches that directory name at any depth.
+Use a leading `/` to anchor a pattern to the target root.
+Use `**` to match across directory boundaries.
 
 ## `[duplicates_detection]`
 
@@ -64,7 +65,7 @@ Extension tables accept the same fields as language tables.
 [core]
 min_lines = 5
 min_nodes = 30
-exclude = ["(^|/)tests(?:/|$)", "(^|/)vendor(?:/|$)"]
+exclude = ["tests/", "vendor/"]
 use_cache = true
 
 [duplicates_detection]

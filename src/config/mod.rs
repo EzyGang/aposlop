@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use regex::RegexSet;
+use ignore::gitignore::Gitignore;
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -17,7 +17,7 @@ const EXTENSION_KEYS: &[&str] = &["go", "rs", "py", "ts", "tsx"];
 #[derive(Clone, Debug)]
 pub(crate) struct Config {
     core: CoreConfig,
-    exclude_matcher: RegexSet,
+    exclude_matcher: Gitignore,
     duplicates: DuplicateConfig,
     metrics: MetricsConfig,
     languages: BTreeMap<String, RuleOverride>,
@@ -104,10 +104,10 @@ pub(crate) enum ConfigError {
     ZeroThreshold { field: &'static str },
     #[error("type_3_threshold must be a finite value in the range 0.0..=1.0")]
     Similarity,
-    #[error("invalid exclude regular expression: {source}")]
+    #[error("invalid exclude pattern: {source}")]
     InvalidExclude {
         #[source]
-        source: regex::Error,
+        source: ignore::Error,
     },
 }
 
@@ -170,8 +170,8 @@ impl Config {
     }
 
     #[must_use]
-    pub(crate) fn is_excluded(&self, normalized_path: &str) -> bool {
-        self.exclude_matcher.is_match(normalized_path)
+    pub(crate) fn is_excluded(&self, path: &Path, is_dir: bool) -> bool {
+        self.exclude_matcher.matched(path, is_dir).is_ignore()
     }
 
     #[must_use]

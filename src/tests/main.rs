@@ -241,7 +241,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
 
     let mut overridden = Vec::new();
     let status = run(
-        Cli::try_parse_from(["aposlop", "ci", target.as_str(), "--exclude", "right[.]rs$"])?,
+        Cli::try_parse_from(["aposlop", "ci", target.as_str(), "--exclude", "/right.rs"])?,
         &mut overridden,
     )?;
     assert_eq!(status, CommandStatus::Success);

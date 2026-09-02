@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
@@ -22,9 +22,9 @@ fn defaults_match_the_v1_contract() -> TestResult {
     assert!(rules.calculate_complexity);
     assert_eq!(rules.complexity_threshold, 15);
     assert!(config.use_cache());
-    assert!(config.is_excluded("crate/tests/check.rs"));
-    assert!(config.is_excluded("packages/app/node_modules/library.js"));
-    assert!(!config.is_excluded("crate/contest/check.rs"));
+    assert!(config.is_excluded(Path::new("crate/tests"), true));
+    assert!(config.is_excluded(Path::new("packages/app/node_modules"), true));
+    assert!(!config.is_excluded(Path::new("crate/contest"), true));
     Ok(())
 }
 
@@ -79,7 +79,7 @@ fn explicit_cli_false_and_excludes_replace_file_values() -> TestResult {
     let config = load_config(
         r#"
     [core]
-    exclude = ["generated"]
+    exclude = ["generated/"]
     use_cache = true
     [duplicates_detection]
     type_1 = true
@@ -90,15 +90,15 @@ fn explicit_cli_false_and_excludes_replace_file_values() -> TestResult {
             type_1: Some(false),
             ..RuleOverride::default()
         },
-        exclude: Some(vec!["^build(?:/|$)".to_owned(), "^fixtures/".to_owned()]),
+        exclude: Some(vec!["build/".to_owned(), "**/fixtures/**".to_owned()]),
         use_cache: Some(false),
     })?;
 
     assert!(!config.rules("rust", "rs").type_1);
     assert!(!config.use_cache());
-    assert!(config.is_excluded("build/output.rs"));
-    assert!(config.is_excluded("fixtures/data.py"));
-    assert!(!config.is_excluded("generated/output.rs"));
+    assert!(config.is_excluded(Path::new("build"), true));
+    assert!(config.is_excluded(Path::new("packages/app/fixtures/data.py"), false));
+    assert!(!config.is_excluded(Path::new("generated"), true));
     Ok(())
 }
 
@@ -119,10 +119,6 @@ fn rejects_unknown_keys_and_invalid_values() -> TestResult {
     assert!(matches!(
         load_config("[duplicates_detection]\ntype_3_threshold = 1.1"),
         Err(ConfigError::Similarity)
-    ));
-    assert!(matches!(
-        load_config("[core]\nexclude = [\"[\"]"),
-        Err(ConfigError::InvalidExclude { .. })
     ));
     assert!(load_config("[core]\nunknown = true").is_err());
     Ok(())

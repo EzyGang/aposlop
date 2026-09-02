@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use regex::RegexSet;
+use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
 use super::{ConfigError, RuleOverride};
 
@@ -45,6 +45,14 @@ pub(super) fn validate_keys(
     Ok(())
 }
 
-pub(super) fn compile_excludes(excludes: &[String]) -> Result<RegexSet, ConfigError> {
-    RegexSet::new(excludes).map_err(|source| ConfigError::InvalidExclude { source })
+pub(super) fn compile_excludes(excludes: &[String]) -> Result<Gitignore, ConfigError> {
+    let mut builder = GitignoreBuilder::new("");
+    for pattern in excludes {
+        builder
+            .add_line(None, pattern)
+            .map_err(|source| ConfigError::InvalidExclude { source })?;
+    }
+    builder
+        .build()
+        .map_err(|source| ConfigError::InvalidExclude { source })
 }
