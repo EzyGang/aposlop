@@ -337,8 +337,18 @@ fn terminal_code_output_prints_every_duplicate_instance() -> TestResult {
     )?;
 
     let output = String::from_utf8(output)?;
-    assert!(output.contains("  Instance 1 code\n    1 │ fn left() {"));
-    assert!(output.contains("  Instance 2 code\n    1 │ fn right() {"));
+    let heading = format!(
+        "{}  Type-3 · 100.0% minimum similarity · 2 instances",
+        report.duplicates[0].id
+    );
+    assert!(output.contains(&format!(
+        "{heading}\n  Instance #1: left.rs:1\n               lines 1–5 (5 lines)\n    1 │ fn left() {{"
+    )));
+    assert!(output.contains(
+        "    5 │ }\n\n  Instance #2: right.rs:1\n               lines 1–5 (5 lines)\n    1 │ fn right() {"
+    ));
+    assert!(!output.contains("Instance #1 code"));
+    assert!(!output.contains("Instance #2 code"));
     Ok(())
 }
 

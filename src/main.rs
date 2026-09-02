@@ -95,9 +95,9 @@ struct Cli {
     #[arg(long, value_name = "N", global = true)]
     min_nodes: Option<usize>,
 
-    /// Replace configured exclusions relative to the target directory.
-    #[arg(long, value_name = "PATH", global = true)]
-    exclude: Vec<PathBuf>,
+    /// Replace configured root-relative exclusion regular expressions.
+    #[arg(long, value_name = "REGEX", global = true)]
+    exclude: Vec<String>,
 
     /// Enable or disable the analysis cache.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]

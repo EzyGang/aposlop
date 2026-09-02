@@ -23,6 +23,12 @@
 
 ---
 
+<h3 align="center">Apos, the Slopbreaker</h3>
+
+<p align="center">
+  Slop always rolls downhill. Aposlop helps to push back.
+</p>
+
 **Aposlop** is a fast command-line tool.
 It finds duplicate code and calculates cyclomatic complexity.
 
@@ -331,7 +337,12 @@ Aposlop uses built-in values when this file does not exist.
 [core]
 min_lines = 5
 min_nodes = 30
-exclude = ["tests/", "vendor/", "node_modules/", "target/"]
+exclude = [
+    "(^|/)tests(?:/|$)",
+    "(^|/)vendor(?:/|$)",
+    "(^|/)node_modules(?:/|$)",
+    "(^|/)target(?:/|$)",
+]
 use_cache = true
 
 [duplicates_detection]
@@ -344,6 +355,11 @@ type_3_threshold = 0.85
 calculate_complexity = true
 complexity_threshold = 15
 ```
+Each `exclude` value is a Rust regular expression matched against the complete root-relative path.
+Aposlop normalizes path separators to `/` before matching.
+Regular expressions use unanchored search unless they contain anchors such as `^` or `$`.
+A directory match excludes its complete subtree.
+
 
 Language and extension tables can override the core values.
 Command-line values override all configuration-file values.
@@ -362,7 +378,7 @@ Command-line values override all configuration-file values.
 | `--terminal-output <locations\|code>` | Select terminal duplicate detail                             |
 | `--min-lines <N>`                     | Override the minimum block line count                        |
 | `--min-nodes <N>`                     | Override the minimum named-node count                        |
-| `--exclude <PATH>`                    | Replace configured exclusions                                |
+| `--exclude <REGEX>`                   | Replace configured exclusion regular expressions             |
 | `--use-cache <BOOL>`                  | Enable or disable the analysis cache                         |
 | `--type-1 <BOOL>`                     | Enable or disable Type-1 findings                            |
 | `--type-2 <BOOL>`                     | Enable or disable Type-2 findings                            |

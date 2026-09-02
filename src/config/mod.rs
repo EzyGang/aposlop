@@ -5,10 +5,11 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use regex::RegexSet;
 use serde::Deserialize;
 use thiserror::Error;
 
-use self::validation::{validate_excludes, validate_keys};
+use self::validation::{compile_excludes, validate_keys};
 
 const LANGUAGE_KEYS: &[&str] = &["rust", "python", "typescript"];
 const EXTENSION_KEYS: &[&str] = &["rs", "py", "ts", "tsx"];
@@ -16,6 +17,7 @@ const EXTENSION_KEYS: &[&str] = &["rs", "py", "ts", "tsx"];
 #[derive(Clone, Debug)]
 pub(crate) struct Config {
     core: CoreConfig,
+    exclude_matcher: RegexSet,
     duplicates: DuplicateConfig,
     metrics: MetricsConfig,
     languages: BTreeMap<String, RuleOverride>,
@@ -28,7 +30,7 @@ pub(crate) struct Config {
 pub(crate) struct CoreConfig {
     pub(crate) min_lines: usize,
     pub(crate) min_nodes: usize,
-    pub(crate) exclude: Vec<PathBuf>,
+    pub(crate) exclude: Vec<String>,
     pub(crate) use_cache: bool,
 }
 
@@ -64,7 +66,7 @@ pub(crate) struct RuleOverride {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct CliOverrides {
     pub(crate) rules: RuleOverride,
-    pub(crate) exclude: Option<Vec<PathBuf>>,
+    pub(crate) exclude: Option<Vec<String>>,
     pub(crate) use_cache: Option<bool>,
 }
 
@@ -102,8 +104,11 @@ pub(crate) enum ConfigError {
     ZeroThreshold { field: &'static str },
     #[error("type_3_threshold must be a finite value in the range 0.0..=1.0")]
     Similarity,
-    #[error("exclude path `{0}` must be relative and cannot contain `..`")]
-    InvalidExclude(PathBuf),
+    #[error("invalid exclude regular expression: {source}")]
+    InvalidExclude {
+        #[source]
+        source: regex::Error,
+    },
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -134,7 +139,7 @@ impl Config {
     pub(crate) fn apply_cli(mut self, cli: CliOverrides) -> Result<Self, ConfigError> {
         cli.rules.validate()?;
         if let Some(excludes) = &cli.exclude {
-            validate_excludes(excludes)?;
+            self.exclude_matcher = compile_excludes(excludes)?;
         }
 
         self.cli = cli;
@@ -165,8 +170,8 @@ impl Config {
     }
 
     #[must_use]
-    pub(crate) fn excludes(&self) -> &[PathBuf] {
-        self.cli.exclude.as_deref().unwrap_or(&self.core.exclude)
+    pub(crate) fn is_excluded(&self, normalized_path: &str) -> bool {
+        self.exclude_matcher.is_match(normalized_path)
     }
 
     #[must_use]
@@ -177,7 +182,7 @@ impl Config {
     fn from_file(file: FileConfig) -> Result<Self, ConfigError> {
         validate_keys(&file.languages, LANGUAGE_KEYS, true)?;
         validate_keys(&file.extensions, EXTENSION_KEYS, false)?;
-        validate_excludes(&file.core.exclude)?;
+        let exclude_matcher = compile_excludes(&file.core.exclude)?;
 
         let global = RuleOverride {
             min_lines: Some(file.core.min_lines),
@@ -197,6 +202,7 @@ impl Config {
 
         Ok(Self {
             core: file.core,
+            exclude_matcher,
             duplicates: file.duplicates_detection,
             metrics: file.metrics,
             languages: file.languages,

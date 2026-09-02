@@ -14,6 +14,8 @@ fn discovery_respects_ignores_excludes_and_supported_extensions() -> TestResult 
     let fixture = TempDir::new()?;
     fs::create_dir(fixture.path().join(".git"))?;
     fs::create_dir(fixture.path().join("generated"))?;
+    fs::create_dir_all(fixture.path().join("module/tests"))?;
+    fs::create_dir_all(fixture.path().join("module/contest"))?;
     fs::write(fixture.path().join(".gitignore"), "ignored.py\n")?;
     fs::write(fixture.path().join("code.rs"), "fn main() {}\n")?;
     fs::write(fixture.path().join("module.py"), "def run():\n    pass\n")?;
@@ -24,9 +26,17 @@ fn discovery_respects_ignores_excludes_and_supported_extensions() -> TestResult 
     )?;
     fs::write(fixture.path().join("ignored.py"), "def ignored(): pass\n")?;
     fs::write(fixture.path().join("generated/skip.rs"), "fn skip() {}\n")?;
+    fs::write(
+        fixture.path().join("module/tests/skip.rs"),
+        "fn nested_test() {}\n",
+    )?;
+    fs::write(
+        fixture.path().join("module/contest/keep.rs"),
+        "fn contest() {}\n",
+    )?;
     fs::write(fixture.path().join("notes.txt"), "unsupported\n")?;
 
-    let config = load_config("[core]\nexclude = [\"generated\"]")?;
+    let config = load_config("[core]\nexclude = [\"^generated(?:/|$)\", \"(^|/)tests(?:/|$)\"]")?;
     let registry = LanguageRegistry::compile()?;
     let discovery = discover(fixture.path(), &config, &registry)?;
     let paths: Vec<_> = discovery
@@ -37,12 +47,19 @@ fn discovery_respects_ignores_excludes_and_supported_extensions() -> TestResult 
 
     assert_eq!(
         paths,
-        ["code.rs", "module.py", "view.ts", "view.tsx"].map(PathBuf::from)
+        vec![
+            PathBuf::from("code.rs"),
+            PathBuf::from("module").join("contest").join("keep.rs"),
+            PathBuf::from("module.py"),
+            PathBuf::from("view.ts"),
+            PathBuf::from("view.tsx"),
+        ]
     );
     assert!(discovery.diagnostics.is_empty());
     assert_eq!(discovery.files[0].identity.language, LanguageId::Rust);
-    assert_eq!(discovery.files[1].identity.language, LanguageId::Python);
-    assert_eq!(discovery.files[2].identity.language, LanguageId::TypeScript);
+    assert_eq!(discovery.files[1].identity.language, LanguageId::Rust);
+    assert_eq!(discovery.files[2].identity.language, LanguageId::Python);
+    assert_eq!(discovery.files[3].identity.language, LanguageId::TypeScript);
     Ok(())
 }
 
