@@ -17,6 +17,7 @@ nav = [
     { "Exclusions" = "configuration/exclusions.md" },
     { "Duplicate results" = "concepts/duplicate-types.md" },
     { "Complexity results" = "concepts/complexity.md" },
+    { "File length" = "concepts/file-length.md" },
     { "Cache" = "operations/cache.md" },
     { "Output formats" = "operations/output.md" },
     { "Diagnostics" = "operations/diagnostics.md" },

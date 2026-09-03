@@ -83,8 +83,42 @@ fn disabling_complexity_changes_reports_without_changing_analysis() -> TestResul
 }
 
 #[test]
+fn file_length_uses_strict_limits_specific_excludes_and_not_allow_ids() -> TestResult {
+    let fixture = TempDir::new()?;
+    let unused_id = FindingId::for_complexity_location(&location("large.rs", 1));
+    fs::write(
+        fixture.path().join(".aposlopignore"),
+        format!("{unused_id}\n"),
+    )?;
+    let allow_list = AllowList::load(fixture.path())?;
+    let mut at_limit = analyzed_file("at_limit.rs", &[]);
+    at_limit.line_count = 300;
+    let mut large = analyzed_file("large.rs", &[]);
+    large.line_count = 301;
+    let mut excluded = analyzed_file("generated/large.rs", &[]);
+    excluded.line_count = 500;
+
+    let report = build(
+        &[excluded, large, at_limit],
+        Vec::new(),
+        &load_config("[file_length]\nmax_lines = 300\nexclude = [\"generated/\"]")?,
+        &allow_list,
+        Vec::new(),
+        Vec::new(),
+    );
+
+    assert_eq!(report.file_length.len(), 1);
+    assert_eq!(report.file_length[0].path, PathBuf::from("large.rs"));
+    assert_eq!(report.file_length[0].lines, 301);
+    assert_eq!(report.file_length[0].max_lines, 300);
+    assert_eq!(report.unused_ignores, [unused_id]);
+    assert!(report.has_findings());
+    Ok(())
+}
+
+#[test]
 fn terminal_and_json_render_the_same_report_contract() -> TestResult {
-    let config = load_config("[core]\nmin_lines = 1\nmin_nodes = 1")?;
+    let config = load_config("[core]\nmin_lines = 1\nmin_nodes = 1\n[file_length]\nmax_lines = 4")?;
     let duplicate = duplicate(CloneKind::Type1, "left.rs", 1, "right.rs", 1);
     let report = build(
         &[analyzed_file("source.rs", &[16])],
@@ -125,12 +159,14 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
     assert!(terminal.contains("Type-1"));
     assert!(terminal.contains("Complexity (1)"));
     assert!(terminal.contains(&report.complexity[0].id.to_string()));
+    assert!(terminal.contains("File length (1)"));
+    assert!(terminal.contains("source.rs: 5 lines (maximum 4)"));
     assert!(terminal.contains("Diagnostics (0)"));
     assert!(terminal.contains("Summary"));
     assert!(terminal.ends_with("\nUnused ignores (0)\n  None\n"));
     assert!(json.ends_with(b"\n"));
     let value: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(value["schema_version"], 5);
+    assert_eq!(value["schema_version"], 6);
     assert_eq!(value["duplicates"][0]["kind"], "type_1");
     assert_eq!(value["duplicates"][0]["minimum_similarity"], 1.0);
     assert_eq!(
@@ -143,6 +179,11 @@ fn terminal_and_json_render_the_same_report_contract() -> TestResult {
         )
     );
     assert_eq!(value["summary"]["duplicate_count"], 1);
+    assert_eq!(value["summary"]["file_length_violation_count"], 1);
+    assert_eq!(value["file_length"][0]["path"], "source.rs");
+    assert_eq!(value["file_length"][0]["lines"], 5);
+    assert_eq!(value["file_length"][0]["max_lines"], 4);
+    assert!(value["file_length"][0].get("id").is_none());
     assert_eq!(
         value["complexity"][0]["id"],
         report.complexity[0].id.to_string()
@@ -220,7 +261,7 @@ fn report_tracks_used_and_unused_ignore_ids() -> TestResult {
         },
     )?;
     let value: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(value["schema_version"], 5);
+    assert_eq!(value["schema_version"], 6);
     assert_eq!(
         value["unused_ignores"],
         serde_json::json!([unused_id.to_string()])
@@ -230,7 +271,7 @@ fn report_tracks_used_and_unused_ignore_ids() -> TestResult {
     render_ci(&mut ci, &report)?;
     assert_eq!(
         String::from_utf8(ci)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 1\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nFile length violations: 0\nUnused ignores: 1\n"
     );
     Ok(())
 }
@@ -241,7 +282,9 @@ fn ci_output_is_a_compact_finding_summary() -> TestResult {
     let failing = build(
         &[analyzed_file("source.rs", &[4])],
         vec![duplicate],
-        &load_config("[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3")?,
+        &load_config(
+            "[core]\nmin_lines = 1\nmin_nodes = 1\n[metrics]\ncomplexity_threshold = 3\n[file_length]\nmax_lines = 4",
+        )?,
         &AllowList::default(),
         Vec::new(),
         Vec::new(),
@@ -266,11 +309,11 @@ fn ci_output_is_a_compact_finding_summary() -> TestResult {
 
     assert_eq!(
         String::from_utf8(failing_output)?,
-        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 1\nUnused ignores: 0\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 1\nFile length violations: 1\nUnused ignores: 0\n"
     );
     assert_eq!(
         String::from_utf8(passing_output)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nFile length violations: 0\nUnused ignores: 0\n"
     );
     Ok(())
 }
@@ -361,6 +404,7 @@ fn analyzed_file(path: &str, scores: &[usize]) -> AnalyzedFile {
             modified_nanoseconds: 0,
             language: LanguageId::Rust,
         },
+        line_count: 5,
         blocks: scores
             .iter()
             .enumerate()

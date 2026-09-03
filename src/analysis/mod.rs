@@ -18,6 +18,7 @@ use self::tokenize::build_block;
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub(crate) struct AnalyzedFile {
     pub(crate) identity: FileIdentity,
+    pub(crate) line_count: usize,
     pub(crate) blocks: Vec<AnalyzedBlock>,
     pub(crate) diagnostics: Vec<AnalysisDiagnostic>,
 }
@@ -110,13 +111,16 @@ fn analyze_file(
         Err(error) => {
             return Ok(file_diagnostic(
                 file,
+                0,
                 AnalysisDiagnosticKind::Read(error.to_string()),
             ));
         }
     };
+    let line_count = source_line_count(&source);
     let Some(tree) = parser.parse(&source, None) else {
         return Ok(file_diagnostic(
             file,
+            line_count,
             AnalysisDiagnosticKind::Parse("parser returned no syntax tree".to_owned()),
         ));
     };
@@ -145,18 +149,29 @@ fn analyze_file(
 
     Ok(AnalyzedFile {
         identity: file.identity,
+        line_count,
         blocks,
         diagnostics,
     })
 }
 
-fn file_diagnostic(file: SourceFile, kind: AnalysisDiagnosticKind) -> AnalyzedFile {
+fn file_diagnostic(
+    file: SourceFile,
+    line_count: usize,
+    kind: AnalysisDiagnosticKind,
+) -> AnalyzedFile {
     AnalyzedFile {
         diagnostics: vec![AnalysisDiagnostic {
             path: file.identity.path.clone(),
             kind,
         }],
         identity: file.identity,
+        line_count,
         blocks: Vec::new(),
     }
+}
+
+fn source_line_count(source: &[u8]) -> usize {
+    source.iter().filter(|&&byte| byte == b'\n').count()
+        + usize::from(!source.is_empty() && source.last() != Some(&b'\n'))
 }

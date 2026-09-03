@@ -28,6 +28,7 @@ Every supported language follows the same report rules:
 - Identifier and literal changes can produce Type-2 duplicate relations.
 - Verified normalized similarity can produce Type-3 duplicate relations.
 - Aposlop gives each function-like block one complexity score.
+- Aposlop checks each source file against its effective file-length limit.
 - Aposlop skips invalid blocks without stopping valid files.
 
 Review the language pages for supported block forms and complexity decisions.

@@ -21,6 +21,7 @@ pub(crate) fn render(
     writeln!(writer, "{}Aposlop report{}", style.title(), style.reset())?;
     render_duplicates(writer, report, sources.as_ref(), style)?;
     render_complexity(writer, report, style)?;
+    crate::report_file_length::render(writer, report, style)?;
     render_diagnostics(writer, report, style)?;
     render_summary(writer, report, style)?;
     render_unused_ignores(writer, report, style)?;
@@ -133,6 +134,8 @@ fn render_summary(
         "  Complexity violations: {}",
         report.summary.complexity_violation_count
     )?;
+    let file_length = report.summary.file_length_violation_count;
+    writeln!(writer, "  File length violations: {file_length}")?;
     Ok(())
 }
 
@@ -152,7 +155,7 @@ fn render_unused_ignores(
     Ok(())
 }
 
-fn section(
+pub(crate) fn section(
     writer: &mut impl Write,
     name: &str,
     count: usize,
@@ -265,7 +268,7 @@ impl SourceText {
 }
 
 #[derive(Clone, Copy)]
-struct Styles {
+pub(crate) struct Styles {
     enabled: bool,
 }
 

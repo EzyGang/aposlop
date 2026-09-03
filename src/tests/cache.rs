@@ -165,6 +165,7 @@ fn source(path: &str, language: LanguageId) -> SourceFile {
 fn analyzed(source: &SourceFile) -> AnalyzedFile {
     AnalyzedFile {
         identity: source.identity.clone(),
+        line_count: 1,
         blocks: Vec::new(),
         diagnostics: Vec::new(),
     }

@@ -15,13 +15,15 @@ Terminal output contains these sections:
 
 1. The `Duplicate groups` section lists connected duplicate groups.
 2. The `Complexity` section lists complexity violations.
-3. The `Diagnostics` section lists recoverable problems.
-4. The `Summary` section lists aggregate counts.
-5. The `Unused ignores` section lists configured IDs that match no current finding.
+3. The `File length` section lists excessive source-file lengths.
+4. The `Diagnostics` section lists recoverable problems.
+5. The `Summary` section lists aggregate counts.
+6. The `Unused ignores` section lists configured IDs that match no current finding.
 
 Each duplicate group contains a finding ID, type, minimum accepted similarity, and two or more source instances.
 Each instance uses a navigable `path:line` anchor and a separate line range.
 Each complexity block contains a finding ID, score, threshold, and source location.
+Each file-length violation contains a path, line count, and effective maximum.
 
 Use source-code output when you need to compare every instance:
 
@@ -53,9 +55,9 @@ Select concise CI output explicitly:
 aposlop ci .
 ```
 
-The `ci` command prints a pass or fail status, both finding counts, and the unused-ignore count.
+The `ci` command prints a status, three finding counts, and the unused-ignore count.
 It omits paths, source code, diagnostics, and aggregate scan statistics.
-Aposlop returns exit code `1` when duplicates or complexity violations exist.
+Aposlop returns exit code `1` when duplicate, complexity, or file-length violations exist.
 Unused ignores are informational and do not change the exit code.
 
 ## Ordering
@@ -65,6 +67,7 @@ Unused ignores are informational and do not change the exit code.
 3. Aposlop sorts otherwise equal groups by duplicate type.
 
 Aposlop sorts complexity violations by location and score.
+Aposlop sorts file-length violations by path and line count.
 Aposlop sorts diagnostics by path, category, and message.
 Aposlop sorts unused ignore IDs deterministically.
 
@@ -85,6 +88,7 @@ aposlop allow aB7_x
 Aposlop writes the ID to `.aposlopignore` in that target directory.
 Blank lines and lines beginning with `#` are permitted.
 Both terminal and JSON reports omit manually excluded duplicate groups and complexity findings.
+File-length violations have no finding ID and cannot be suppressed through `.aposlopignore`.
 An unused ignore is a valid configured ID that matches no current finding.
 This can occur after source changes, group membership changes, threshold changes, or disabled reporting.
 The final report section lists unused ignores without modifying the file.

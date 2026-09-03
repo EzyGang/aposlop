@@ -1,4 +1,4 @@
-use super::{CoreConfig, DuplicateConfig, MetricsConfig};
+use super::{CoreConfig, DuplicateConfig, FileLengthConfig, MetricsConfig};
 
 impl Default for CoreConfig {
     fn default() -> Self {
@@ -29,6 +29,15 @@ impl Default for MetricsConfig {
         Self {
             calculate_complexity: true,
             complexity_threshold: 15,
+        }
+    }
+}
+
+impl Default for FileLengthConfig {
+    fn default() -> Self {
+        Self {
+            max_lines: 300,
+            exclude: Vec::new(),
         }
     }
 }

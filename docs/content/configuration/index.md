@@ -21,6 +21,10 @@ type_3_threshold = 0.85
 [metrics]
 calculate_complexity = true
 complexity_threshold = 15
+
+[file_length]
+max_lines = 300
+exclude = []
 ```
 
 Unknown sections and fields are errors.
@@ -34,6 +38,7 @@ The `typescript` language table applies to `.ts` and `.tsx` files.
 ```toml
 [languages.go]
 min_lines = 8
+max_file_lines = 350
 
 [languages.rust]
 min_lines = 10
@@ -53,6 +58,7 @@ Do not include a leading dot.
 min_lines = 15
 min_nodes = 50
 type_3_threshold = 0.90
+max_file_lines = 400
 ```
 
 Extension tables can set these fields:
@@ -65,7 +71,8 @@ Extension tables can set these fields:
 - `type_3_threshold` sets the Type-3 Jaccard threshold.
 - `calculate_complexity` enables complexity violations.
 - `complexity_threshold` sets the complexity threshold.
+- `max_file_lines` sets the source-file line limit.
 
-`exclude` and `use_cache` are global-only fields.
+`core.exclude`, `file_length.exclude`, and `use_cache` are global-only fields.
 
 Review the [configuration reference](../reference/configuration.md) for types, defaults, and validation rules.

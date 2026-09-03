@@ -1,11 +1,11 @@
 ---
 name: aposlop
-description: Configure and use Aposlop to find duplicated code and cyclomatic complexity in Go, Rust, Python, TypeScript, and TSX repositories. Use this skill whenever a user asks to detect code duplication, code clones, repeated agent-generated logic, code slop, or excessive complexity. Also use it when adding Aposlop to a repository, agent validation workflow, or CI process, and when investigating or resolving Aposlop findings.
+description: Configure and use Aposlop to find duplicated code, excessive file length, and cyclomatic complexity in Go, Rust, Python, TypeScript, and TSX repositories. Use this skill whenever a user asks to detect code duplication, code clones, repeated agent-generated logic, code slop, oversized source files, or excessive complexity. Also use it when adding Aposlop to a repository, agent validation workflow, or CI process, and when investigating or resolving Aposlop findings.
 ---
 
 # Aposlop
 
-Use Aposlop as a source-quality check for duplicate code and excessive cyclomatic complexity.
+Use Aposlop as a source-quality check for duplicate code, excessive file length, and excessive cyclomatic complexity.
 Aposlop supports Go, Rust, Python, TypeScript, and TSX.
 
 ## Select the command
@@ -36,7 +36,7 @@ Replace it with `uvx aposlop` when using the temporary installation.
 2. Locate an existing `.aposlop.toml`, `.aposlopignore`, and `.gitignore` before changing files.
 3. Run a complete baseline report from the target root.
 4. Inspect diagnostics and unused ignores before interpreting findings.
-5. Refactor unintended duplication and excessive control flow at their source.
+5. Refactor unintended duplication, oversized files, and excessive control flow at their source.
 6. Remove obsolete ignore IDs only after confirming their findings no longer exist.
 7. Run the complete report again.
 8. Run `aposlop ci .` only after the complete report is clean or accepted.
@@ -76,6 +76,10 @@ type_3_threshold = 0.85
 [metrics]
 calculate_complexity = true
 complexity_threshold = 15
+
+[file_length]
+max_lines = 300
+exclude = []
 ```
 
 Add the cache file to the target repository's `.gitignore`:
@@ -101,8 +105,8 @@ Use guidance equivalent to this text:
 ```markdown
 After supported source changes, run `aposlop ci .` from the repository root.
 If it reports findings, inspect them with `aposlop . --terminal-output code` or `aposlop . --format json`.
-Refactor unintended duplication and excessive complexity before completion.
-Use `aposlop allow <FINDING> .` only for reviewed, intentional findings.
+Refactor unintended duplication, oversized files, and excessive complexity before completion.
+Use `aposlop allow <FINDING> .` only for reviewed duplicate or complexity findings.
 ```
 
 Use `aposlop ci .` as the completion check because normal terminal and JSON reports do not fail for findings.

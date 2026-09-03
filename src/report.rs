@@ -12,7 +12,7 @@ use crate::detection::{CloneGroup, FindingId};
 use crate::ingest::IngestDiagnostic;
 use crate::{OutputFormat, TerminalOutput};
 
-pub(crate) const REPORT_SCHEMA_VERSION: u32 = 5;
+pub(crate) const REPORT_SCHEMA_VERSION: u32 = 6;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub(crate) struct Report {
@@ -20,13 +20,16 @@ pub(crate) struct Report {
     pub(crate) summary: Summary,
     pub(crate) duplicates: Vec<CloneGroup>,
     pub(crate) complexity: Vec<ComplexityViolation>,
+    pub(crate) file_length: Vec<FileLengthViolation>,
     pub(crate) diagnostics: Vec<Diagnostic>,
     pub(crate) unused_ignores: Vec<FindingId>,
 }
 impl Report {
     #[must_use]
     pub(crate) fn has_findings(&self) -> bool {
-        self.summary.duplicate_count > 0 || self.summary.complexity_violation_count > 0
+        self.summary.duplicate_count > 0
+            || self.summary.complexity_violation_count > 0
+            || self.summary.file_length_violation_count > 0
     }
 }
 
@@ -36,6 +39,7 @@ pub(crate) struct Summary {
     pub(crate) analyzed_blocks: usize,
     pub(crate) duplicate_count: usize,
     pub(crate) complexity_violation_count: usize,
+    pub(crate) file_length_violation_count: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -44,6 +48,13 @@ pub(crate) struct ComplexityViolation {
     pub(crate) location: SourceLocation,
     pub(crate) score: usize,
     pub(crate) threshold: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub(crate) struct FileLengthViolation {
+    pub(crate) path: PathBuf,
+    pub(crate) lines: usize,
+    pub(crate) max_lines: usize,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -100,9 +111,19 @@ pub(crate) fn build(
             .then(left.kind.cmp(&right.kind))
     });
     let mut complexity = Vec::new();
+    let mut file_length = Vec::new();
     let mut diagnostics = Vec::new();
     for file in files {
         let rules = config.rules(file.identity.language.key(), file.identity.extension());
+        if file.line_count > rules.max_file_lines
+            && !config.is_file_length_excluded(&file.identity.path)
+        {
+            file_length.push(FileLengthViolation {
+                path: file.identity.path.clone(),
+                lines: file.line_count,
+                max_lines: rules.max_file_lines,
+            });
+        }
         if rules.calculate_complexity {
             for block in &file.blocks {
                 if block.complexity > rules.complexity_threshold {
@@ -153,6 +174,11 @@ pub(crate) fn build(
             .cmp(&right.location)
             .then(left.score.cmp(&right.score))
     });
+    file_length.sort_unstable_by(|left, right| {
+        left.path
+            .cmp(&right.path)
+            .then(left.lines.cmp(&right.lines))
+    });
     diagnostics.sort_unstable_by(|left, right| {
         left.path
             .cmp(&right.path)
@@ -165,12 +191,14 @@ pub(crate) fn build(
         analyzed_blocks: files.iter().map(|file| file.blocks.len()).sum(),
         duplicate_count: duplicates.len(),
         complexity_violation_count: complexity.len(),
+        file_length_violation_count: file_length.len(),
     };
     Report {
         schema_version: REPORT_SCHEMA_VERSION,
         summary,
         duplicates,
         complexity,
+        file_length,
         diagnostics,
         unused_ignores,
     }
@@ -207,6 +235,11 @@ pub(crate) fn render_ci(writer: &mut impl Write, report: &Report) -> Result<(), 
         writer,
         "Complexity violations: {}",
         report.summary.complexity_violation_count
+    )?;
+    writeln!(
+        writer,
+        "File length violations: {}",
+        report.summary.file_length_violation_count
     )?;
     writeln!(writer, "Unused ignores: {}", report.unused_ignores.len())?;
     Ok(())

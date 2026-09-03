@@ -12,15 +12,15 @@ fn full_pipeline_is_identical_before_and_after_cache_hit() -> TestResult {
     let fixture = TempDir::new()?;
     fs::write(
         fixture.path().join(".aposlop.toml"),
-        "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = true\n[metrics]\ncomplexity_threshold = 1",
+        "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = true\n[metrics]\ncomplexity_threshold = 1\n[file_length]\nmax_lines = 1",
     )?;
     fs::write(
         fixture.path().join("left.rs"),
-        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n// file\n",
     )?;
     fs::write(
         fixture.path().join("right.rs"),
-        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n// file\n",
     )?;
 
     let target = fixture.path().to_string_lossy().into_owned();
@@ -35,6 +35,7 @@ fn full_pipeline_is_identical_before_and_after_cache_hit() -> TestResult {
     assert_eq!(report["summary"]["scanned_files"], 2);
     assert_eq!(report["summary"]["duplicate_count"], 1);
     assert_eq!(report["summary"]["complexity_violation_count"], 2);
+    assert_eq!(report["summary"]["file_length_violation_count"], 2);
     assert!(fixture.path().join(".aposlop_cache").is_file());
     Ok(())
 }
@@ -59,7 +60,7 @@ fn five_duplicates_render_as_one_group() -> TestResult {
         &mut json,
     )?;
     let report: serde_json::Value = serde_json::from_slice(&json)?;
-    assert_eq!(report["schema_version"], 5);
+    assert_eq!(report["schema_version"], 6);
     assert_eq!(report["summary"]["duplicate_count"], 1);
     assert_eq!(
         report["duplicates"][0]["instances"]
@@ -112,6 +113,69 @@ fn cli_overrides_change_pipeline_rules() -> TestResult {
 
     let report: serde_json::Value = serde_json::from_slice(&output)?;
     assert_eq!(report["summary"]["duplicate_count"], 0);
+    Ok(())
+}
+
+#[test]
+fn file_length_uses_layered_limits_cli_override_and_specific_excludes() -> TestResult {
+    let fixture = TempDir::new()?;
+    fs::write(
+        fixture.path().join(".aposlop.toml"),
+        concat!(
+            "[core]\nmin_lines = 1\nmin_nodes = 1\nuse_cache = false\n",
+            "[file_length]\nmax_lines = 2\nexclude = [\"ignored.py\"]\n",
+            "[languages.python]\nmax_file_lines = 3\n",
+            "[extensions.py]\nmax_file_lines = 4\n",
+        ),
+    )?;
+    fs::write(
+        fixture.path().join("long.py"),
+        "def duplicate(value):\n    if value:\n        return 1\n    return 0\n# long\n",
+    )?;
+    fs::write(
+        fixture.path().join("ignored.py"),
+        "def duplicate(value):\n    if value:\n        return 1\n    return 0\n# ignored\n# extra\n",
+    )?;
+    fs::write(fixture.path().join("at_limit.py"), "value = 1\n".repeat(4))?;
+    fs::write(
+        fixture.path().join("global.rs"),
+        "const VALUE: i32 = 1;\n".repeat(3),
+    )?;
+    let target = fixture.path().to_string_lossy().into_owned();
+    let mut output = Vec::new();
+    run(
+        Cli::try_parse_from(["aposlop", target.as_str(), "--format", "json"])?,
+        &mut output,
+    )?;
+    let report: serde_json::Value = serde_json::from_slice(&output)?;
+
+    assert_eq!(report["summary"]["scanned_files"], 4);
+    assert_eq!(report["summary"]["file_length_violation_count"], 2);
+    assert_eq!(report["summary"]["duplicate_count"], 1);
+    assert_eq!(
+        report["duplicates"][0]["instances"][0]["path"],
+        "ignored.py"
+    );
+    assert_eq!(report["duplicates"][0]["instances"][1]["path"], "long.py");
+    assert_eq!(report["file_length"][0]["path"], "global.rs");
+    assert_eq!(report["file_length"][0]["max_lines"], 2);
+    assert_eq!(report["file_length"][1]["path"], "long.py");
+    assert_eq!(report["file_length"][1]["max_lines"], 4);
+
+    let mut overridden = Vec::new();
+    run(
+        Cli::try_parse_from([
+            "aposlop",
+            target.as_str(),
+            "--format",
+            "json",
+            "--max-file-lines",
+            "5",
+        ])?,
+        &mut overridden,
+    )?;
+    let overridden: serde_json::Value = serde_json::from_slice(&overridden)?;
+    assert_eq!(overridden["summary"]["file_length_violation_count"], 0);
     Ok(())
 }
 
@@ -236,7 +300,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Findings);
     assert_eq!(
         String::from_utf8(failing)?,
-        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 0\nUnused ignores: 0\n"
+        "Aposlop CI: failed\nDuplicate groups: 1\nComplexity violations: 0\nFile length violations: 0\nUnused ignores: 0\n"
     );
 
     let mut overridden = Vec::new();
@@ -247,7 +311,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(overridden)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nFile length violations: 0\nUnused ignores: 0\n"
     );
 
     fs::remove_file(fixture.path().join("right.rs"))?;
@@ -256,7 +320,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     assert_eq!(status, CommandStatus::Success);
     assert_eq!(
         String::from_utf8(passing)?,
-        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nUnused ignores: 0\n"
+        "Aposlop CI: passed\nDuplicate groups: 0\nComplexity violations: 0\nFile length violations: 0\nUnused ignores: 0\n"
     );
     Ok(())
 }

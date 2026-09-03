@@ -2,13 +2,13 @@
 
 Aposlop separates operational failures from reportable findings.
 Terminal and JSON output do not fail because findings exist.
-CI output fails when duplicates or complexity violations exist.
+CI output fails when duplicate, complexity, or file-length violations exist.
 Unused ignores are informational and do not change any exit code.
 
 | Code | Meaning |
 | ---: | --- |
 | `0` | Aposlop completed successfully, and CI output found no reportable findings. |
-| `1` | Aposlop failed operationally, or CI output found duplicates or complexity violations. |
+| `1` | Aposlop failed operationally, or CI output found duplicate, complexity, or file-length violations. |
 | `2` | Aposlop rejected invalid command-line usage. |
 
 ## Automation

@@ -43,6 +43,21 @@ This command makes every supported file use `3`:
 aposlop . --min-lines 3
 ```
 
+The same order applies to file-length limits:
+
+```toml
+[file_length]
+max_lines = 300
+
+[languages.python]
+max_file_lines = 500
+
+[extensions.py]
+max_file_lines = 600
+```
+
+`--max-file-lines 700` overrides every configured language and extension value.
+
 ## Boolean overrides
 
 Boolean command-line options require an explicit value.
@@ -57,3 +72,4 @@ aposlop . --type-2 false --calculate-complexity false
 A `core.exclude` value replaces the built-in list.
 One or more `--exclude` options replace the configured list.
 Aposlop does not merge exclusion lists across layers.
+`file_length.exclude` is a separate config-only replacement list with an empty default.

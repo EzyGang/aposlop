@@ -20,6 +20,8 @@ Aposlop omits unmatched old entries from the next cache file.
 
 ## Cached data
 
+Each cached file contains its physical line count.
+
 Each cached block contains this analysis data:
 
 - The cache stores the source location and line span.

@@ -7,10 +7,11 @@ JSON output ends with one newline.
 
 | Field | Meaning |
 | --- | --- |
-| `schema_version` | The report schema version is `5`. |
-| `summary` | Aggregate file, block, duplicate-group, and complexity counts. |
+| `schema_version` | The report schema version is `6`. |
+| `summary` | Aggregate file, block, duplicate-group, complexity, and file-length counts. |
 | `duplicates` | Sorted duplicate groups. |
 | `complexity` | Sorted complexity violations. |
+| `file_length` | Sorted file-length violations. |
 | `diagnostics` | Sorted recoverable diagnostics. |
 | `unused_ignores` | Sorted valid ignore IDs that match no current finding. |
 
@@ -37,6 +38,17 @@ Each complexity violation contains these fields:
 - `score` contains calculated cyclomatic complexity.
 - `threshold` contains the effective threshold for that block.
 
+## File-length fields
+
+Each file-length violation contains these fields:
+
+- `path` contains the source path relative to the target directory.
+- `lines` contains the physical source-file line count.
+- `max_lines` contains the effective global, language, extension, or command-line limit.
+
+File-length violations have no finding ID.
+`file_length.exclude` is the only suppression that leaves the file available to other checks.
+
 ## Diagnostic fields
 
 Each diagnostic contains these fields:
@@ -55,12 +67,13 @@ Unused ignores are informational and do not change the process exit code.
 
 ```json
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "summary": {
     "scanned_files": 3,
     "analyzed_blocks": 3,
     "duplicate_count": 1,
-    "complexity_violation_count": 1
+    "complexity_violation_count": 1,
+    "file_length_violation_count": 1
   },
   "duplicates": [
     {
@@ -96,6 +109,13 @@ Unused ignores are informational and do not change the process exit code.
       },
       "score": 18,
       "threshold": 15
+    }
+  ],
+  "file_length": [
+    {
+      "path": "src/large.rs",
+      "lines": 342,
+      "max_lines": 300
     }
   ],
   "diagnostics": [],

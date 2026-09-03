@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "aposlop"
 dynamic = ["version"]
-description = "Detect duplicated code and report cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX"
+description = "Detect duplicated code, excessive file length, and cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT OR Apache-2.0"

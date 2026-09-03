@@ -17,7 +17,7 @@ aposlop ci .
 ```
 
 The normal terminal and JSON reports return success after completed analysis even when findings exist.
-The CI command returns failure when duplicate or complexity findings remain.
+The CI command returns failure when duplicate, complexity, or file-length findings remain.
 Unused ignores are informational and do not change CI status.
 
 ## Exit codes
@@ -33,7 +33,7 @@ An operational failure uses the same code.
 
 ## JSON report
 
-The current JSON `schema_version` is `5`.
+The current JSON `schema_version` is `6`.
 JSON output ends with one newline.
 
 Top-level fields are:
@@ -41,9 +41,10 @@ Top-level fields are:
 | Field | Meaning |
 | --- | --- |
 | `schema_version` | Report contract version |
-| `summary` | Aggregate file, block, duplicate-group, and complexity counts |
+| `summary` | Aggregate file, block, duplicate-group, complexity, and file-length counts |
 | `duplicates` | Sorted duplicate groups |
 | `complexity` | Sorted complexity violations |
+| `file_length` | Sorted file-length violations |
 | `diagnostics` | Sorted recoverable diagnostics |
 | `unused_ignores` | Sorted valid ignore IDs that match no current finding |
 
@@ -64,6 +65,15 @@ Each complexity violation has these fields:
 - `location`: source location
 - `score`: calculated cyclomatic complexity
 - `threshold`: effective threshold for that block
+
+Each file-length violation has these fields:
+
+- `path`: target-relative source path
+- `lines`: physical source-file line count
+- `max_lines`: effective line limit
+
+File-length violations have no finding ID.
+Only `file_length.exclude` suppresses them without removing the file from other checks.
 
 Each diagnostic has these fields:
 
