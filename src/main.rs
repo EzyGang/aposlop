@@ -6,6 +6,7 @@ mod detection;
 mod ingest;
 mod language;
 mod report;
+mod report_file_length;
 mod report_terminal;
 mod update;
 
@@ -70,7 +71,7 @@ enum Command {
 #[command(
     name = "aposlop",
     version,
-    about = "Detect duplicate code and report cyclomatic complexity"
+    about = "Detect duplicate code, excessive file length, and cyclomatic complexity"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -90,7 +91,6 @@ struct Cli {
     /// Override the minimum block line count.
     #[arg(long, value_name = "N", global = true)]
     min_lines: Option<usize>,
-
     /// Override the minimum named-node count.
     #[arg(long, value_name = "N", global = true)]
     min_nodes: Option<usize>,
@@ -106,11 +106,9 @@ struct Cli {
     /// Enable or disable Type-1 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_1: Option<bool>,
-
     /// Enable or disable Type-2 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_2: Option<bool>,
-
     /// Enable or disable Type-3 duplicate reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     type_3: Option<bool>,
@@ -126,6 +124,10 @@ struct Cli {
     /// Override the complexity violation threshold.
     #[arg(long, value_name = "N", global = true)]
     complexity_threshold: Option<usize>,
+
+    /// Override the maximum source-file line count.
+    #[arg(long, value_name = "N", global = true)]
+    max_file_lines: Option<usize>,
 }
 
 impl Cli {
@@ -140,6 +142,7 @@ impl Cli {
                 type_3_threshold: self.type_3_threshold,
                 calculate_complexity: self.calculate_complexity,
                 complexity_threshold: self.complexity_threshold,
+                max_file_lines: self.max_file_lines,
             },
             exclude: (!self.exclude.is_empty()).then(|| self.exclude.clone()),
             use_cache: self.use_cache,

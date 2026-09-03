@@ -30,7 +30,7 @@
 </p>
 
 **Aposlop** is a fast command-line tool.
-It finds duplicate code and calculates cyclomatic complexity.
+It finds duplicate code, excessive file length, and cyclomatic complexity.
 
 Aposlop supports Go, Rust, Python, TypeScript, and TSX.
 Aposlop uses Tree-sitter to parse each supported language.
@@ -51,6 +51,7 @@ Aposlop uses Tree-sitter to parse each supported language.
 - [Core Features](#core-features)
   - [Duplicate Detection](#duplicate-detection)
   - [Cyclomatic Complexity](#cyclomatic-complexity)
+  - [File Length](#file-length)
   - [Language Support](#language-support)
   - [Output Formats](#output-formats)
   - [Manual Exclusions](#manual-exclusions)
@@ -65,19 +66,20 @@ Aposlop uses Tree-sitter to parse each supported language.
 
 Aposlop exists to find code slop from coding agents.
 
-Coding agents can generate duplicate code and add complex control flow.
+Coding agents can generate duplicate code, complex control flow, and oversized source files.
 These changes can enter a project faster than a reviewer can find them.
 
 Text comparison does not find a duplicate after an agent renames identifiers or changes literals.
 A linter does not find repeated logic in different files or languages.
-A complexity limit does not identify repeated logic.
+A complexity limit does not identify repeated logic or growing file responsibilities.
 
 Aposlop uses exact, normalized, and verified near-miss duplicate detection.
-It also calculates cyclomatic complexity for each code block.
+It calculates cyclomatic complexity for each code block.
+It also reports supported source files that exceed their configured line limit.
 
 Aposlop is fast enough for an agent validation loop.
 You can configure thresholds for each language and file extension.
-You can also exclude paths or accept specific findings.
+You can exclude paths or accept duplicate and complexity findings.
 These controls let a project accept known findings and continue development.
 
 | Feature             | Result                                                  |
@@ -86,6 +88,7 @@ These controls let a project accept known findings and continue development.
 | Type-2 detection    | Finds duplicates after identifier or literal changes    |
 | Type-3 detection    | Finds verified near-miss duplicates                     |
 | Complexity analysis | Calculates complexity for each code block               |
+| File-length check   | Reports supported files above their effective limit      |
 | Terminal code view  | Shows every group instance with line numbers            |
 | JSON output         | Provides stable data for other tools                    |
 | CI command          | Returns failure when findings remain                    |
@@ -103,6 +106,7 @@ These controls let a project accept known findings and continue development.
 - **Grouping.** Connected duplicate relations become one deterministic group with every source instance.
 - **Complexity.** Each block starts at `1` and adds unique language-specific decision captures.
   Nested blocks have independent scores.
+- **File length.** Each supported file keeps one physical line count for threshold reporting.
 - **Cache.** Versioned bincode data reuses unchanged analysis.
   File metadata and schema versions invalidate stale entries before atomic replacement.
 
@@ -275,6 +279,20 @@ score > complexity_threshold
 
 [Read the complexity model](https://aposlop.ezygang.digital/concepts/complexity/).
 
+### File Length
+
+Aposlop reports a supported source file when its line count exceeds its effective maximum.
+The default maximum is `300` lines.
+
+```text
+lines > max_file_lines
+```
+
+Use `[file_length].exclude` for check-specific gitignore-style exclusions.
+File-length violations cannot be suppressed with `aposlop allow`.
+
+[Read the file-length guide](https://aposlop.ezygang.digital/concepts/file-length/).
+
 ### Language Support
 
 | Language   | Extensions |
@@ -293,7 +311,7 @@ Aposlop follows standard ignore files such as `.gitignore`.
 ### Output Formats
 
 The terminal report is the default.
-It contains duplicate groups, complexity findings, diagnostics, and a summary.
+It contains duplicate groups, complexity findings, file-length violations, diagnostics, and a summary.
 
 ```bash
 aposlop . --format terminal
@@ -327,6 +345,7 @@ The command writes the ID to `.aposlopignore`.
 Delete the ID from that file to restore the finding.
 Aposlop reports valid IDs that match no current finding as unused ignores at the end of each report.
 Unused ignores do not change the process exit code.
+File-length violations have no finding ID and cannot be added to `.aposlopignore`.
 
 ---
 
@@ -351,13 +370,18 @@ type_3_threshold = 0.85
 [metrics]
 calculate_complexity = true
 complexity_threshold = 15
-```
-Each `exclude` value uses the same pattern syntax as one `.gitignore` line.
-A directory pattern such as `tests/` matches that directory name at any depth.
-Patterns can use `/` for root anchoring and `**` for recursive directory matching.
 
-Language and extension tables can override the core values.
-Command-line values override all configuration-file values.
+[file_length]
+max_lines = 300
+exclude = []
+```
+`core.exclude` and `file_length.exclude` use the same syntax as one `.gitignore` line.
+`core.exclude` removes matching paths from all analysis.
+`file_length.exclude` suppresses only file-length violations.
+Directory patterns match at any depth, while `/` anchors and `**` recurse.
+
+Language and extension tables can override `max_file_lines` and the existing analysis rules.
+Command-line values override all configuration-file layers.
 
 [Read the configuration guide](https://aposlop.ezygang.digital/configuration/).
 
@@ -381,6 +405,7 @@ Command-line values override all configuration-file values.
 | `--type-3-threshold <RATIO>`          | Override the Type-3 threshold                                |
 | `--calculate-complexity <BOOL>`       | Enable or disable complexity findings                        |
 | `--complexity-threshold <N>`          | Override the complexity threshold                            |
+| `--max-file-lines <N>`                | Override the maximum source-file line count                  |
 
 [Read the complete CLI reference](https://aposlop.ezygang.digital/reference/cli/).
 

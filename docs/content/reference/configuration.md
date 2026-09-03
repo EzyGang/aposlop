@@ -31,6 +31,16 @@ Use `**` to match across directory boundaries.
 | `calculate_complexity` | Boolean | `true` | Controls report entries, not analysis. |
 | `complexity_threshold` | Positive integer | `15` | Must be greater than zero. |
 
+## `[file_length]`
+
+| Field | Type | Default | Validation |
+| --- | --- | --- | --- |
+| `max_lines` | Positive integer | `300` | A file violates the limit only when its line count is larger. |
+| `exclude` | Array of gitignore-style patterns | Empty | Suppresses only file-length violations. |
+
+File-length exclusions do not remove files from duplicate or complexity analysis.
+File-length violations cannot be suppressed through `.aposlopignore`.
+
 ## `[languages.<name>]`
 
 Aposlop supports these language names:
@@ -52,6 +62,7 @@ Each language table accepts these optional fields:
 | `type_3_threshold` | Number within `0.0..=1.0` |
 | `calculate_complexity` | Boolean |
 | `complexity_threshold` | Positive integer |
+| `max_file_lines` | Positive integer |
 
 ## `[extensions.<extension>]`
 
@@ -78,11 +89,17 @@ type_3_threshold = 0.85
 calculate_complexity = true
 complexity_threshold = 15
 
+[file_length]
+max_lines = 300
+exclude = ["generated/"]
+
 [languages.typescript]
 min_lines = 8
 complexity_threshold = 20
+max_file_lines = 500
 
 [extensions.tsx]
 min_lines = 12
 type_3_threshold = 0.90
+max_file_lines = 400
 ```

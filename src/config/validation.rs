@@ -10,6 +10,7 @@ impl RuleOverride {
             ("min_lines", self.min_lines),
             ("min_nodes", self.min_nodes),
             ("complexity_threshold", self.complexity_threshold),
+            ("max_file_lines", self.max_file_lines),
         ] {
             if value == Some(0) {
                 return Err(ConfigError::ZeroThreshold { field });

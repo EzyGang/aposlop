@@ -39,6 +39,10 @@ type_3_threshold = 0.85
 [metrics]
 calculate_complexity = true
 complexity_threshold = 15
+
+[file_length]
+max_lines = 300
+exclude = []
 ```
 
 | Field | Type | Default | Constraint |
@@ -53,9 +57,13 @@ complexity_threshold = 15
 | `duplicates_detection.type_3_threshold` | number | `0.85` | Finite and within `0.0..=1.0` |
 | `metrics.calculate_complexity` | Boolean | `true` | Controls reporting, not parsing |
 | `metrics.complexity_threshold` | integer | `15` | Greater than zero |
+| `file_length.max_lines` | integer | `300` | Greater than zero |
+| `file_length.exclude` | gitignore-style pattern array | empty | Suppresses only file-length violations |
 
 A complexity violation requires `score > complexity_threshold`.
 A score equal to the threshold does not violate the policy.
+A file-length violation requires `lines > max_file_lines`.
+A line count equal to the effective limit does not violate the policy.
 
 ## Language and extension overrides
 
@@ -75,6 +83,7 @@ Language and extension tables accept these fields:
 - `type_3_threshold`
 - `calculate_complexity`
 - `complexity_threshold`
+- `max_file_lines`
 
 Example:
 
@@ -82,10 +91,12 @@ Example:
 [languages.typescript]
 min_lines = 8
 complexity_threshold = 20
+max_file_lines = 500
 
 [extensions.tsx]
 min_lines = 12
 type_3_threshold = 0.90
+max_file_lines = 400
 ```
 
 With this configuration, `.ts` files use `min_lines = 8` and `.tsx` files use `min_lines = 12`.
@@ -104,6 +115,10 @@ Aposlop applies standard ignore sources before parsing:
 Configured exclusions use the same pattern syntax as one `.gitignore` line.
 A directory pattern such as `tests/` matches that directory name at any depth.
 Use `/tests/` for the target root only or `**/tests/**` for explicit recursive matching.
+
+`file_length.exclude` uses the same patterns but suppresses only file-length violations.
+Matching files remain available to duplicate and complexity analysis.
+File-length violations have no finding ID and cannot be suppressed through `.aposlopignore`.
 
 Add `.aposlop_cache` to `.gitignore` when the cache is enabled.
 Aposlop does not change ignore files automatically.

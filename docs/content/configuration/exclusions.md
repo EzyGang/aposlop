@@ -45,6 +45,18 @@ aposlop . \
 
 The command-line list replaces `core.exclude` for that run.
 
+## File-length exclusions
+
+`file_length.exclude` suppresses only file-length violations.
+Matching files still participate in duplicate detection and complexity analysis.
+
+```toml
+[file_length]
+exclude = ["generated/", "**/fixtures/**"]
+```
+
+File-length violations cannot be suppressed through `aposlop allow` or `.aposlopignore`.
+
 ## Cache file
 
 Add `.aposlop_cache` to the target directory's `.gitignore`:

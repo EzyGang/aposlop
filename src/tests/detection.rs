@@ -322,6 +322,7 @@ fn oracle_files(block_count: usize, shingle_count: usize) -> Vec<AnalyzedFile> {
             modified_nanoseconds: 0,
             language: LanguageId::TypeScript,
         },
+        line_count: 5,
         blocks,
         diagnostics: Vec::new(),
     }]
@@ -359,6 +360,7 @@ fn manual_file(path: &str, shingles: &[u64], discriminator: u8) -> AnalyzedFile 
             modified_nanoseconds: 0,
             language: LanguageId::TypeScript,
         },
+        line_count: 5,
         blocks: vec![AnalyzedBlock {
             location: SourceLocation {
                 path: PathBuf::from(path),

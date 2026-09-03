@@ -6,6 +6,7 @@ This page explains the underlying approach without requiring knowledge of the co
 ```mermaid
 flowchart LR
   files[Supported source files] --> parse[Tree-sitter parsing]
+  files --> length[Physical line count]
   parse --> tokens[Canonical and normalized streams]
   tokens --> exact[Exact Type-1 and Type-2 candidates]
   tokens --> shingles[Five-token shingles]
@@ -16,6 +17,7 @@ flowchart LR
   jaccard --> report
   parse --> complexity[Complexity captures]
   complexity --> report
+  length --> report
 ```
 
 ## File discovery
@@ -67,6 +69,12 @@ Language queries capture branches, loops, alternatives, exception paths, conditi
 Aposlop counts each syntax range once.
 Every block starts with complexity `1`.
 
+## File length
+
+Aposlop counts physical source lines once during analysis.
+Report construction compares each count with its global, language, extension, or command-line limit.
+Check-specific gitignore-style patterns suppress only file-length violations.
+
 ## Cache
 
 The local cache stores analysis results for unchanged files.
@@ -78,5 +86,5 @@ Aposlop replaces the cache atomically after successful output.
 
 ## Deterministic reports
 
-Aposlop sorts files, blocks, duplicate groups, complexity violations, and diagnostics.
+Aposlop sorts files, blocks, duplicate groups, complexity violations, file-length violations, and diagnostics.
 Terminal and JSON output use the same report data.

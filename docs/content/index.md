@@ -1,6 +1,6 @@
 # Aposlop documentation
 
-Aposlop detects duplicate code and reports cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX projects.
+Aposlop detects duplicate code, excessive file length, and cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX projects.
 
 Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without unconditional all-pairs comparison.
 
@@ -9,6 +9,7 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 - [Getting started](getting-started/index.md) explains installation and the first analysis.
 - [Configuration](configuration/index.md) explains global, language, and extension fields.
 - [Duplicate types](concepts/duplicate-types.md) explains Type-1, Type-2, and Type-3 relations and grouping.
+- [File length](concepts/file-length.md) explains limits, overrides, and check-specific exclusions.
 - [Languages](languages/index.md) describes supported files and analysis behavior.
 - [Output formats](operations/output.md) describes terminal and JSON reports.
 - [CLI reference](reference/cli.md) describes every command-line option.
@@ -21,6 +22,7 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 | Languages | Go, Rust, Python, TypeScript, and TSX |
 | Duplicate types | Type-1, Type-2, and Type-3 |
 | Complexity | Cyclomatic complexity for function-like blocks |
+| File length | Supported source files above a default `300`-line limit |
 | Output | Deterministic terminal and JSON reports |
 | Cache | Versioned local cache with atomic replacement |
 | Ignore handling | Standard ignore files and exclusions relative to the target directory |

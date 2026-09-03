@@ -20,6 +20,8 @@ pub(crate) struct Config {
     exclude_matcher: Gitignore,
     duplicates: DuplicateConfig,
     metrics: MetricsConfig,
+    file_length: FileLengthConfig,
+    file_length_exclude_matcher: Gitignore,
     languages: BTreeMap<String, RuleOverride>,
     extensions: BTreeMap<String, RuleOverride>,
     cli: CliOverrides,
@@ -50,6 +52,13 @@ pub(crate) struct MetricsConfig {
     pub(crate) complexity_threshold: usize,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub(crate) struct FileLengthConfig {
+    pub(crate) max_lines: usize,
+    pub(crate) exclude: Vec<String>,
+}
+
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub(crate) struct RuleOverride {
@@ -61,6 +70,7 @@ pub(crate) struct RuleOverride {
     pub(crate) type_3_threshold: Option<f64>,
     pub(crate) calculate_complexity: Option<bool>,
     pub(crate) complexity_threshold: Option<usize>,
+    pub(crate) max_file_lines: Option<usize>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -80,6 +90,7 @@ pub(crate) struct EffectiveRules {
     pub(crate) type_3_threshold: f64,
     pub(crate) calculate_complexity: bool,
     pub(crate) complexity_threshold: usize,
+    pub(crate) max_file_lines: usize,
 }
 
 #[derive(Debug, Error)]
@@ -117,6 +128,7 @@ struct FileConfig {
     core: CoreConfig,
     duplicates_detection: DuplicateConfig,
     metrics: MetricsConfig,
+    file_length: FileLengthConfig,
     languages: BTreeMap<String, RuleOverride>,
     extensions: BTreeMap<String, RuleOverride>,
 }
@@ -157,6 +169,7 @@ impl Config {
             type_3_threshold: self.duplicates.type_3_threshold,
             calculate_complexity: self.metrics.calculate_complexity,
             complexity_threshold: self.metrics.complexity_threshold,
+            max_file_lines: self.file_length.max_lines,
         };
 
         if let Some(values) = self.languages.get(language) {
@@ -175,6 +188,13 @@ impl Config {
     }
 
     #[must_use]
+    pub(crate) fn is_file_length_excluded(&self, path: &Path) -> bool {
+        self.file_length_exclude_matcher
+            .matched_path_or_any_parents(path, false)
+            .is_ignore()
+    }
+
+    #[must_use]
     pub(crate) fn use_cache(&self) -> bool {
         self.cli.use_cache.unwrap_or(self.core.use_cache)
     }
@@ -183,6 +203,7 @@ impl Config {
         validate_keys(&file.languages, LANGUAGE_KEYS, true)?;
         validate_keys(&file.extensions, EXTENSION_KEYS, false)?;
         let exclude_matcher = compile_excludes(&file.core.exclude)?;
+        let file_length_exclude_matcher = compile_excludes(&file.file_length.exclude)?;
 
         let global = RuleOverride {
             min_lines: Some(file.core.min_lines),
@@ -193,6 +214,7 @@ impl Config {
             type_3_threshold: Some(file.duplicates_detection.type_3_threshold),
             calculate_complexity: Some(file.metrics.calculate_complexity),
             complexity_threshold: Some(file.metrics.complexity_threshold),
+            max_file_lines: Some(file.file_length.max_lines),
         };
         global.validate()?;
 
@@ -205,6 +227,8 @@ impl Config {
             exclude_matcher,
             duplicates: file.duplicates_detection,
             metrics: file.metrics,
+            file_length: file.file_length,
+            file_length_exclude_matcher,
             languages: file.languages,
             extensions: file.extensions,
             cli: CliOverrides::default(),
@@ -230,5 +254,6 @@ impl RuleOverride {
         apply!(type_3_threshold);
         apply!(calculate_complexity);
         apply!(complexity_threshold);
+        apply!(max_file_lines);
     }
 }

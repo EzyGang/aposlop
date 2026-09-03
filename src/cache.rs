@@ -10,8 +10,8 @@ use thiserror::Error;
 use crate::analysis::AnalyzedFile;
 use crate::ingest::SourceFile;
 
-pub(crate) const CACHE_FORMAT_VERSION: u32 = 1;
-pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 5;
+pub(crate) const CACHE_FORMAT_VERSION: u32 = 2;
+pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 6;
 const CACHE_NAME: &str = ".aposlop_cache";
 
 #[derive(Debug, Deserialize, Serialize)]

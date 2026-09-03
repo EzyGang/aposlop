@@ -47,10 +47,16 @@ aposlop allow <FINDING> [PATH]
 | `--calculate-complexity <BOOL>` | `true` or `false` | Override `metrics.calculate_complexity`. |
 | `--complexity-threshold <N>` | Positive integer | Override `metrics.complexity_threshold`. |
 
+## File length
+
+| Option | Type | Purpose |
+| --- | --- | --- |
+| `--max-file-lines <N>` | Positive integer | Override every configured file-length limit. |
+
 ## CI command
 
-`aposlop ci [PATH]` prints only status and duplicate and complexity finding counts.
-It returns exit code `1` when either finding count is nonzero.
+`aposlop ci [PATH]` prints duplicate, complexity, and file-length finding counts.
+It returns exit code `1` when any finding count is nonzero.
 Analysis override options can follow the command.
 
 ```bash
@@ -62,6 +68,7 @@ aposlop ci ../project --exclude 'generated/'
 `aposlop allow <FINDING> [PATH]` saves one duplicate or complexity finding ID in `<PATH>/.aposlopignore`.
 `PATH` defaults to `.`.
 The command does not run analysis.
+File-length violations have no finding ID and cannot be used with this command.
 
 ## General options
 
