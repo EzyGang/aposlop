@@ -1,6 +1,6 @@
 [package]
 name = "aposlop"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2024"
 description = "Detect duplicated code, excessive file length, and cyclomatic complexity across Go, Rust, Python, TypeScript, and TSX"
 license = "MIT OR Apache-2.0"
