@@ -236,6 +236,13 @@ Analyze the current directory:
 aposlop .
 ```
 
+Run the same analysis without a global installation:
+
+```bash
+uvx aposlop .
+cargo run -- .
+```
+
 Show the source for each duplicate:
 
 ```bash
