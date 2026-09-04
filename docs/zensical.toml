@@ -29,6 +29,14 @@ nav = [
     { "Python" = "languages/python.md" },
     { "TypeScript and TSX" = "languages/typescript.md" },
   ] },
+  { "Agent skills" = [
+    { "Overview" = "skills/index.md" },
+    { "Aposlop" = "skills/aposlop.md" },
+    { "Code changes" = "skills/code-changes.md" },
+    { "Test changes" = "skills/test-changes.md" },
+    { "Deslop tests" = "skills/deslop-tests.md" },
+    { "Deslop turbo" = "skills/deslop-turbo.md" },
+  ] },
   { "Reference" = [
     { "CLI" = "reference/cli.md" },
     { "Configuration" = "reference/configuration.md" },
