@@ -1,11 +1,12 @@
 # CLI reference
 
-Aposlop scans one optional target directory, runs a CI finding check, or updates manual exclusions.
+Aposlop scans a directory, checks CI findings, updates exclusions, or installs agent skills.
 
 ```text
 aposlop [PATH] [OPTIONS]
 aposlop ci [PATH] [OPTIONS]
 aposlop allow <FINDING> [PATH]
+aposlop install-skills
 ```
 
 `PATH` identifies the target directory and defaults to `.`.
@@ -69,6 +70,12 @@ aposlop ci ../project --exclude 'generated/'
 `PATH` defaults to `.`.
 The command does not run analysis.
 File-length violations have no finding ID and cannot be used with this command.
+
+## Install skills command
+
+`aposlop install-skills` installs the bundled agent skills.
+It uses `npx` when available and uses `pnpm dlx` otherwise.
+The skills installer lets you choose skills and target agents.
 
 ## General options
 

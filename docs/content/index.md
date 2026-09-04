@@ -13,6 +13,7 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 - [Languages](languages/index.md) describes supported files and analysis behavior.
 - [Output formats](operations/output.md) describes terminal and JSON reports.
 - [CLI reference](reference/cli.md) describes every command-line option.
+- [Agent skills](skills/index.md) explains the bundled guides for coding agents.
 - [Under the hood](concepts/how-it-works.md) explains Tree-sitter, exact similarity joins, and Jaccard verification.
 
 ## Supported analysis

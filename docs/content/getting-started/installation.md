@@ -2,6 +2,13 @@
 
 Aposlop is available as a native binary for Linux, macOS, and Windows.
 
+Aposlop has two components:
+
+1. The CLI scans source code and reports findings.
+2. Agent skills guide coding agents during setup, coding, testing, and cleanup.
+
+Install either component or both.
+
 ## Install script on Linux or macOS
 
 Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/).
@@ -66,30 +73,25 @@ cargo install --path . --locked
 
 ## Install the agent skills
 
-Discover and install the bundled agent skills with npm:
+Use the installed CLI:
+
+```bash
+aposlop install-skills
+```
+
+The command uses `npx` when available.
+It uses `pnpm dlx` when `npx` is unavailable.
+
+You can also run either installer directly:
 
 ```bash
 npx skills@latest add EzyGang/aposlop
-```
-
-Or use pnpm:
-
-```bash
 pnpm dlx skills@latest add EzyGang/aposlop
 ```
 
-The installer lists every bundled skill and lets you select the skills and target agents.
-
-The `aposlop` skill teaches agents to configure Aposlop, inspect findings, and add Aposlop to validation workflows.
-The `aposlop-code-changes` skill helps agents desplop code through small, reuse-first changes that fix shared root causes.
-The `aposlop-deslop-tests` skill removes low-value tests and then simplifies production seams that only those tests required.
-The `aposlop-deslop-turbo` skill completes test deslop first, then minimizes applicable production logic without changing behavior.
-
-The first two skills can activate automatically from the request context.
-The two deslop skills declare manual-only activation.
-Invoke `/aposlop-deslop-tests` or `/aposlop-deslop-turbo` manually when the agent supports slash commands.
-For other agents, select the named deslop skill through their skill interface.
-The skills do not install the Aposlop binary.
+The installer lets you choose the skills and target agents.
+The skills do not install the Aposlop CLI.
+Read the [agent skills guide](../skills/index.md) for each skill.
 
 ## Update checks
 
