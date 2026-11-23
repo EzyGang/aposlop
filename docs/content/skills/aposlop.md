@@ -1,3 +1,7 @@
+---
+title: aposlop
+---
+
 # `aposlop`
 
 Use this skill to install, configure, run, and read Aposlop.

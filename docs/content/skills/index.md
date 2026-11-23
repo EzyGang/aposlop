@@ -1,3 +1,7 @@
+---
+title: Agent skills
+---
+
 # Agent skills
 
 Aposlop includes optional guides for coding agents.

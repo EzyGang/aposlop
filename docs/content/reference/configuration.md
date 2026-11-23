@@ -1,3 +1,7 @@
+---
+title: Configuration reference
+---
+
 # Configuration reference
 
 Aposlop deserializes `.aposlop.toml` into typed sections and rejects unknown fields.

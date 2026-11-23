@@ -1,3 +1,7 @@
+---
+title: Exclusions and ignore files
+---
+
 # Exclusions and ignore files
 
 Aposlop applies ignore rules during traversal before file metadata and parsing work.

@@ -1,3 +1,7 @@
+---
+title: How Aposlop works
+---
+
 # How Aposlop works
 
 Aposlop combines syntax-aware analysis with deterministic candidate generation.

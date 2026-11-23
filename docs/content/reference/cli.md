@@ -1,3 +1,7 @@
+---
+title: CLI reference
+---
+
 # CLI reference
 
 Aposlop scans a directory, checks CI findings, updates exclusions, or installs agent skills.

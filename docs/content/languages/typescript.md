@@ -1,3 +1,7 @@
+---
+title: TypeScript and TSX support
+---
+
 # TypeScript and TSX support
 
 Aposlop analyzes `.ts` and `.tsx` files.

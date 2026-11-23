@@ -1,3 +1,7 @@
+---
+title: aposlop-code-changes
+---
+
 # `aposlop-code-changes`
 
 Use this skill to make the smallest complete code change.
