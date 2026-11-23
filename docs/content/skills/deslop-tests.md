@@ -1,3 +1,7 @@
+---
+title: aposlop-deslop-tests
+---
+
 # `aposlop-deslop-tests`
 
 Use this skill to remove tests that protect no distinct behavior.

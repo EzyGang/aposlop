@@ -1,6 +1,7 @@
 [project]
 site_name = "Aposlop Documentation"
 site_description = "Installation, usage, configuration, language, output, and analysis documentation for Aposlop."
+site_url = "https://aposlop.ezygang.digital/"
 docs_dir = "content"
 site_dir = "site"
 
@@ -24,10 +25,10 @@ nav = [
   ] },
   { "Languages" = [
     { "Overview" = "languages/index.md" },
-    { "Go" = "languages/go.md" },
-    { "Rust" = "languages/rust.md" },
-    { "Python" = "languages/python.md" },
-    { "TypeScript and TSX" = "languages/typescript.md" },
+    { "Go support" = "languages/go.md" },
+    { "Rust support" = "languages/rust.md" },
+    { "Python support" = "languages/python.md" },
+    { "TypeScript and TSX support" = "languages/typescript.md" },
   ] },
   { "Agent skills" = [
     { "Overview" = "skills/index.md" },
@@ -48,6 +49,7 @@ nav = [
 
 [project.theme]
 variant = "modern"
+custom_dir = "overrides"
 logo = "images/icon.png"
 favicon = "images/icon.png"
 features = [
@@ -81,3 +83,55 @@ primary = "deep-purple"
 accent = "teal"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
+
+[project.plugins.meta-descriptions]
+trim = true
+
+[project.plugins.social]
+
+[project.plugins.privacy]
+assets_include = ["fonts.googleapis.com/*", "fonts.gstatic.com/*"]
+
+[project.plugins.llmstxt]
+full_output = "llms-full.txt"
+
+[project.plugins.llmstxt.sections]
+"Getting started" = ["index.md", "getting-started/*.md"]
+"Using Aposlop" = ["configuration/*.md", "concepts/duplicate-types.md", "concepts/complexity.md", "concepts/file-length.md", "operations/*.md"]
+"Languages" = ["languages/*.md"]
+"Agent skills" = ["skills/*.md"]
+"Reference" = ["reference/*.md"]
+"Under the hood" = ["concepts/how-it-works.md"]
+
+# Zensical's default Markdown extensions, listed in full because setting one option replaces
+# the whole default set. The only change is anchor_linenums: line-number anchors are links
+# without text, which screen readers and Lighthouse report on every page with a code block.
+[project.markdown_extensions]
+abbr = {}
+admonition = {}
+attr_list = {}
+def_list = {}
+footnotes = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.arithmatex.generic = true
+pymdownx.betterem = {}
+pymdownx.caret = {}
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = false
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.magiclink = {}
+pymdownx.mark = {}
+pymdownx.smartsymbols = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+pymdownx.tabbed.combine_header_slug = true
+pymdownx.tasklist.custom_checkbox = true
+pymdownx.tilde = {}

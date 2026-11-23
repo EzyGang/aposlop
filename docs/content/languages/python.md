@@ -1,3 +1,7 @@
+---
+title: Python support
+---
+
 # Python support
 
 Aposlop analyzes `.py` files.

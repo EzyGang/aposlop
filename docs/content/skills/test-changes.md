@@ -1,3 +1,7 @@
+---
+title: aposlop-test-changes
+---
+
 # `aposlop-test-changes`
 
 Use this skill to write a few tests that protect visible behavior.

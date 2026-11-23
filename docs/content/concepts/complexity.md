@@ -1,3 +1,7 @@
+---
+title: Cyclomatic complexity
+---
+
 # Cyclomatic complexity
 
 Aposlop calculates complexity for each block during parsing.

@@ -1,3 +1,7 @@
+---
+title: Duplicate types
+---
+
 # Duplicate types
 
 Aposlop classifies block relations into three mutually exclusive duplicate types.

@@ -1,3 +1,7 @@
+---
+title: Go support
+---
+
 # Go support
 
 Aposlop analyzes `.go` files.
