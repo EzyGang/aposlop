@@ -13,6 +13,7 @@ use tree_sitter::{Language, Query};
 
 const NORMALIZATION_CAPTURES: &[&str] = &[
     "block",
+    "sequence",
     "anonymize.identifier",
     "anonymize.literal",
     "ignore",

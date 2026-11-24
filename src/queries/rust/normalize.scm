@@ -3,6 +3,8 @@
   (closure_expression)
 ] @block
 
+(block) @sequence
+
 [
   (identifier)
   (field_identifier)

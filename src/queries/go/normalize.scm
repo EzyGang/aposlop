@@ -4,6 +4,8 @@
   (func_literal)
 ] @block
 
+(statement_list) @sequence
+
 [
   (identifier)
   (field_identifier)

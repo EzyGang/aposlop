@@ -44,6 +44,7 @@ aposlop install-skills
 | `--type-2 <BOOL>` | `true` or `false` | Override `duplicates_detection.type_2`. |
 | `--type-3 <BOOL>` | `true` or `false` | Override `duplicates_detection.type_3`. |
 | `--type-3-threshold <RATIO>` | Finite number from `0.0` through `1.0` | Override `duplicates_detection.type_3_threshold`. |
+| `--statement-runs <BOOL>` | `true` or `false` | Override `duplicates_detection.statement_runs`. |
 
 ## Complexity
 

@@ -90,6 +90,10 @@ pub(crate) struct Cli {
     #[arg(long, value_name = "RATIO", global = true)]
     type_3_threshold: Option<f64>,
 
+    /// Enable or disable duplicate statement runs inside larger blocks.
+    #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
+    statement_runs: Option<bool>,
+
     /// Enable or disable complexity reporting.
     #[arg(long, value_name = "BOOL", action = ArgAction::Set, global = true)]
     calculate_complexity: Option<bool>,
@@ -113,6 +117,7 @@ impl Cli {
                 type_2: self.type_2,
                 type_3: self.type_3,
                 type_3_threshold: self.type_3_threshold,
+                statement_runs: self.statement_runs,
                 calculate_complexity: self.calculate_complexity,
                 complexity_threshold: self.complexity_threshold,
                 max_file_lines: self.max_file_lines,

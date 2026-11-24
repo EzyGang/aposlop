@@ -60,7 +60,8 @@ fn classify_groups(
                 };
                 if enabled {
                     groups.add(
-                        pair,
+                        pair.0.0,
+                        pair.1.0,
                         if exact {
                             CloneKind::Type1
                         } else {

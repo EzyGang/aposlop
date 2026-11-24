@@ -16,11 +16,11 @@ fn full_pipeline_is_identical_before_and_after_cache_hit() -> TestResult {
     )?;
     fs::write(
         fixture.path().join("left.rs"),
-        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n// file\n",
+        "fn duplicate(value: bool) -> i32 { if value { return 1; } 0 }\n// file\n",
     )?;
     fs::write(
         fixture.path().join("right.rs"),
-        "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n// file\n",
+        "fn duplicate(value: bool) -> i32 { if value { return 1; } 0 }\n// file\n",
     )?;
 
     let target = fixture.path().to_string_lossy().into_owned();
@@ -130,11 +130,11 @@ fn file_length_uses_layered_limits_cli_override_and_specific_excludes() -> TestR
     )?;
     fs::write(
         fixture.path().join("long.py"),
-        "def duplicate(value):\n    if value:\n        return 1\n    return 0\n# long\n",
+        "def duplicate(value):\n    if value:\n        value = 1\n    return value\n# long\n",
     )?;
     fs::write(
         fixture.path().join("ignored.py"),
-        "def duplicate(value):\n    if value:\n        return 1\n    return 0\n# ignored\n# extra\n",
+        "def duplicate(value):\n    if value:\n        value = 1\n    return value\n# ignored\n# extra\n",
     )?;
     fs::write(fixture.path().join("at_limit.py"), "value = 1\n".repeat(4))?;
     fs::write(
@@ -189,7 +189,7 @@ fn allow_command_suppresses_finding_until_id_is_removed() -> TestResult {
     for path in ["a.rs", "b.rs", "c.rs", "d.rs", "e.rs"] {
         fs::write(
             fixture.path().join(path),
-            "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+            "fn duplicate(value: bool) -> i32 { if value { return 1; } 0 }\n",
         )?;
     }
     let target = fixture.path().to_string_lossy().into_owned();
@@ -288,7 +288,7 @@ fn ci_output_returns_finding_and_success_statuses() -> TestResult {
     for path in ["left.rs", "right.rs"] {
         fs::write(
             fixture.path().join(path),
-            "fn duplicate(value: bool) -> i32 { if value { 1 } else { 0 } }\n",
+            "fn duplicate(value: bool) -> i32 { if value { return 1; } 0 }\n",
         )?;
     }
     let target = fixture.path().to_string_lossy().into_owned();

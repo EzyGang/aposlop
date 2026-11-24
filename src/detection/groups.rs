@@ -1,7 +1,10 @@
 use std::collections::BTreeMap;
 
-use super::{BlockId, CloneGroup, CloneKind, EligibleBlock, Pair};
+use crate::analysis::SourceLocation;
 
+use super::{CloneGroup, CloneKind};
+
+/// Connects duplicate relations between dense member indices into groups.
 pub(super) struct GroupBuilder {
     parent: Vec<usize>,
     size: Vec<usize>,
@@ -12,21 +15,21 @@ pub(super) struct GroupBuilder {
 }
 
 impl GroupBuilder {
-    pub(super) fn new(block_count: usize) -> Self {
+    pub(super) fn new(member_count: usize) -> Self {
         Self {
-            parent: (0..block_count).collect(),
-            size: vec![1; block_count],
-            kind: vec![CloneKind::Type1; block_count],
-            minimum_similarity: vec![1.0; block_count],
-            active: vec![false; block_count],
+            parent: (0..member_count).collect(),
+            size: vec![1; member_count],
+            kind: vec![CloneKind::Type1; member_count],
+            minimum_similarity: vec![1.0; member_count],
+            active: vec![false; member_count],
             relation_count: 0,
         }
     }
 
-    pub(super) fn add(&mut self, pair: Pair, kind: CloneKind, similarity: f64) {
+    pub(super) fn add(&mut self, left: usize, right: usize, kind: CloneKind, similarity: f64) {
         self.relation_count += 1;
-        let left = self.find(pair.0.0);
-        let right = self.find(pair.1.0);
+        let left = self.find(left);
+        let right = self.find(right);
         if left == right {
             self.kind[left] = self.kind[left].max(kind);
             self.minimum_similarity[left] = self.minimum_similarity[left].min(similarity);
@@ -49,31 +52,26 @@ impl GroupBuilder {
         self.active[root] = true;
     }
 
-    pub(super) fn finish(mut self, blocks: &[EligibleBlock<'_>]) -> Vec<CloneGroup> {
-        let mut members: BTreeMap<usize, Vec<BlockId>> = BTreeMap::new();
+    /// Builds one group for each connected component, in unspecified order.
+    pub(super) fn finish<F>(mut self, location: F) -> Vec<CloneGroup>
+    where
+        F: Fn(usize) -> SourceLocation,
+    {
+        let mut members: BTreeMap<usize, Vec<usize>> = BTreeMap::new();
         for index in 0..self.parent.len() {
             let root = self.find(index);
             if self.active[root] {
-                members.entry(root).or_default().push(BlockId(index));
+                members.entry(root).or_default().push(index);
             }
         }
 
-        let mut groups: Vec<_> = members
+        members
             .into_iter()
-            .map(|(root, ids)| {
-                let instances = ids
-                    .into_iter()
-                    .map(|id| blocks[id.0].block.location.clone())
-                    .collect();
+            .map(|(root, indices)| {
+                let instances = indices.into_iter().map(&location).collect();
                 CloneGroup::new(self.kind[root], self.minimum_similarity[root], instances)
             })
-            .collect();
-        groups.sort_unstable_by(|left, right| {
-            left.instances
-                .cmp(&right.instances)
-                .then(left.kind.cmp(&right.kind))
-        });
-        groups
+            .collect()
     }
 
     #[cfg(test)]

@@ -8,7 +8,7 @@ use crate::detection::shingles::build_shingles;
 use crate::language::CompiledLanguage;
 
 use super::query::{capture_ranges, complexity};
-use super::{AnalyzedBlock, SourceLocation};
+use super::{AnalyzedBlock, SourceLocation, Statement};
 
 pub(super) fn build_block(
     provider: &CompiledLanguage,
@@ -20,6 +20,7 @@ pub(super) fn build_block(
     let mut exact = Vec::new();
     let mut normalized = Vec::new();
     let mut token_hashes = Vec::new();
+    let mut leaves = Vec::new();
     let mut named_node_count = 0;
     let mut stack = vec![block];
 
@@ -31,6 +32,11 @@ pub(super) fn build_block(
         }
 
         if node.child_count() == 0 {
+            leaves.push(Leaf {
+                start_byte: node.start_byte(),
+                exact: exact.len(),
+                normalized: normalized.len(),
+            });
             append_record(&mut exact, node.kind().as_bytes(), node_text(source, node));
             let start = normalized.len();
             let role = if ranges.identifiers.iter().any(|range| contains(range, node)) {
@@ -53,6 +59,19 @@ pub(super) fn build_block(
         }
     }
 
+    leaves.push(Leaf {
+        start_byte: usize::MAX,
+        exact: exact.len(),
+        normalized: normalized.len(),
+    });
+    let block_range = block.byte_range();
+    let sequences = ranges
+        .sequences
+        .iter()
+        .filter(|sequence| !ranges.is_in_nested_block(&block_range, &sequence.byte_range()))
+        .map(|&sequence| statements(sequence, &leaves, &normalized))
+        .filter(|statements| !statements.is_empty())
+        .collect();
     let shingles = build_shingles(&token_hashes);
     let start_line = block.start_position().row + 1;
     let end_line = block.end_position().row + 1;
@@ -72,7 +91,62 @@ pub(super) fn build_block(
         exact,
         normalized,
         shingles,
-        complexity: complexity(provider, block, source, &ranges.blocks),
+        complexity: complexity(provider, block, source, &ranges),
+        sequences,
+    }
+}
+
+/// Stream offsets where one leaf record starts.
+struct Leaf {
+    start_byte: usize,
+    exact: usize,
+    normalized: usize,
+}
+
+/// Builds the statements of `sequence` from the leaf offsets of the owning block.
+///
+/// The final leaf in `leaves` is a sentinel that holds the stream lengths.
+fn statements(sequence: Node<'_>, leaves: &[Leaf], normalized: &[u8]) -> Vec<Statement> {
+    let mut cursor = sequence.walk();
+    sequence
+        .named_children(&mut cursor)
+        .filter(|statement| !statement.is_extra())
+        .map(|statement| {
+            let first =
+                &leaves[leaves.partition_point(|leaf| leaf.start_byte < statement.start_byte())];
+            let last =
+                &leaves[leaves.partition_point(|leaf| leaf.start_byte < statement.end_byte())];
+            let normalized_range = first.normalized..last.normalized;
+            Statement {
+                start_byte: statement.start_byte(),
+                end_byte: statement.end_byte(),
+                start_line: statement.start_position().row + 1,
+                end_line: statement.end_position().row + 1,
+                named_node_count: subtree_named_node_count(statement),
+                exact: first.exact..last.exact,
+                normalized_hash: xxh3_64(&normalized[normalized_range.clone()]),
+                normalized: normalized_range,
+            }
+        })
+        .collect()
+}
+
+fn subtree_named_node_count(root: Node<'_>) -> usize {
+    let mut cursor = root.walk();
+    let mut count = 0;
+    loop {
+        count += usize::from(cursor.node().is_named());
+        if cursor.goto_first_child() || cursor.goto_next_sibling() {
+            continue;
+        }
+        loop {
+            if !cursor.goto_parent() {
+                return count;
+            }
+            if cursor.goto_next_sibling() {
+                break;
+            }
+        }
     }
 }
 

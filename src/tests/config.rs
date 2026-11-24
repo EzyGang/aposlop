@@ -19,6 +19,7 @@ fn defaults_match_the_v1_contract() -> TestResult {
     assert!(rules.type_2);
     assert!(rules.type_3);
     assert_eq!(rules.type_3_threshold, 0.85);
+    assert!(rules.statement_runs);
     assert!(rules.calculate_complexity);
     assert_eq!(rules.complexity_threshold, 15);
     assert_eq!(rules.max_file_lines, 300);
@@ -50,10 +51,12 @@ fn rules_resolve_global_language_extension_then_cli() -> TestResult {
     min_lines = 6
     type_2 = false
     type_3_threshold = 0.80
+    statement_runs = false
     [extensions.tsx]
     min_lines = 9
     min_nodes = 12
     type_3_threshold = 0.90
+    statement_runs = true
     "#,
     )?
     .apply_cli(CliOverrides {
@@ -67,11 +70,13 @@ fn rules_resolve_global_language_extension_then_cli() -> TestResult {
 
     assert_eq!(config.rules("go", "go").min_lines, 10);
     assert_eq!(config.rules("typescript", "ts").min_lines, 6);
+    assert!(!config.rules("typescript", "ts").statement_runs);
     let tsx = config.rules("typescript", "tsx");
     assert_eq!(tsx.min_lines, 9);
     assert_eq!(tsx.min_nodes, 5);
     assert!(tsx.type_2);
     assert_eq!(tsx.type_3_threshold, 0.90);
+    assert!(tsx.statement_runs);
     assert_eq!(config.rules("rust", "rs").min_lines, 4);
     Ok(())
 }
@@ -185,6 +190,8 @@ fn cli_parses_all_independent_overrides() -> TestResult {
         "true",
         "--type-3-threshold",
         "0.9",
+        "--statement-runs",
+        "false",
         "--calculate-complexity",
         "false",
         "--complexity-threshold",
@@ -202,6 +209,7 @@ fn cli_parses_all_independent_overrides() -> TestResult {
     assert_eq!(overrides.rules.min_nodes, Some(5));
     assert_eq!(overrides.rules.type_2, Some(false));
     assert_eq!(overrides.rules.type_3_threshold, Some(0.9));
+    assert_eq!(overrides.rules.statement_runs, Some(false));
     assert_eq!(overrides.rules.calculate_complexity, Some(false));
     assert_eq!(overrides.rules.complexity_threshold, Some(3));
     assert_eq!(overrides.rules.max_file_lines, Some(400));

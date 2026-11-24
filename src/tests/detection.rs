@@ -311,6 +311,7 @@ fn oracle_files(block_count: usize, shingle_count: usize) -> Vec<AnalyzedFile> {
             normalized,
             shingles,
             complexity: 1,
+            sequences: Vec::new(),
         });
     }
 
@@ -377,6 +378,7 @@ fn manual_file(path: &str, shingles: &[u64], discriminator: u8) -> AnalyzedFile 
             normalized,
             shingles: shingles.to_vec(),
             complexity: 1,
+            sequences: Vec::new(),
         }],
         diagnostics: Vec::new(),
     }
