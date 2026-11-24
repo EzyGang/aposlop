@@ -18,8 +18,6 @@ A cache hit requires these equal values:
 - The language identity must match.
 
 The cache file starts with a header that holds the cache format version and the analysis schema version.
-Aposlop reads the header before the entries.
-When either version differs, every file becomes a cache miss without a diagnostic.
 
 A missing or stale entry becomes a cache miss.
 Aposlop omits unmatched old entries from the next cache file.

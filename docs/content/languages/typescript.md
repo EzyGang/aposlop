@@ -6,7 +6,6 @@ title: TypeScript and TSX support
 
 Aposlop analyzes `.ts` and `.tsx` files.
 TSX parsing supports embedded JSX syntax.
-Aposlop accepts TypeScript 5.0 type-only re-exports such as `export type * as Types from './types'`.
 
 Both extensions use the `typescript` configuration key.
 Language overrides apply to both extensions.
