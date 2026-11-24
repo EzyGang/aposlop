@@ -260,6 +260,10 @@ fn typescript_covers_current_branching_and_implicit_blocks() -> TestResult {
             "class Forms { field = 1; static {} method() {} }\n",
         ),
     )?;
+    fs::write(
+        fixture.path().join("exports.ts"),
+        "export type * as Types from './types';\nexport type * from './more';\n",
+    )?;
 
     let files = analyze_fixture(&fixture)?;
     assert_eq!(only_block(&files, "default.ts")?.complexity, 2);
@@ -268,6 +272,7 @@ fn typescript_covers_current_branching_and_implicit_blocks() -> TestResult {
     assert_eq!(only_block(&files, "assign.ts")?.complexity, 4);
     assert_eq!(only_block(&files, "control.ts")?.complexity, 14);
     assert_eq!(file(&files, "forms.ts")?.blocks.len(), 8);
+    assert!(file(&files, "exports.ts")?.diagnostics.is_empty());
 
     let class = file(&files, "class.ts")?;
     let blocks: Vec<_> = class
