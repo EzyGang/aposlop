@@ -1,4 +1,5 @@
 mod exact;
+mod fragments;
 mod groups;
 pub(crate) mod shingles;
 mod similarity_join;
@@ -66,21 +67,29 @@ pub(super) struct EligibleBlock<'a> {
 #[must_use]
 pub(crate) fn detect(files: &[AnalyzedFile], config: &Config) -> Vec<CloneGroup> {
     let blocks = eligible_blocks(files, config);
-    classify(&blocks).finish(&blocks)
+    let mut classified = HashSet::new();
+    let mut groups =
+        classify(&blocks, &mut classified).finish(|index| blocks[index].block.location.clone());
+    groups.extend(fragments::detect(files, config, &blocks, &classified));
+    groups.sort_unstable_by(|left, right| {
+        left.instances
+            .cmp(&right.instances)
+            .then(left.kind.cmp(&right.kind))
+    });
+    groups
 }
 
 #[cfg(test)]
 #[must_use]
 pub(crate) fn detected_relation_count(files: &[AnalyzedFile], config: &Config) -> usize {
     let blocks = eligible_blocks(files, config);
-    classify(&blocks).relation_count()
+    classify(&blocks, &mut HashSet::new()).relation_count()
 }
 
-fn classify(blocks: &[EligibleBlock<'_>]) -> groups::GroupBuilder {
-    let mut classified = HashSet::new();
+fn classify(blocks: &[EligibleBlock<'_>], classified: &mut HashSet<Pair>) -> groups::GroupBuilder {
     let mut groups = groups::GroupBuilder::new(blocks.len());
-    exact::classify(blocks, &mut classified, &mut groups);
-    similarity_join::classify(blocks, &mut classified, &mut groups);
+    exact::classify(blocks, classified, &mut groups);
+    similarity_join::classify(blocks, classified, &mut groups);
     groups
 }
 

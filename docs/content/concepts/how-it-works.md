@@ -14,6 +14,9 @@ flowchart LR
   parse --> tokens[Canonical and normalized streams]
   tokens --> exact[Exact Type-1 and Type-2 candidates]
   tokens --> shingles[Five-token shingles]
+  tokens --> statements[Statement hashes]
+  statements --> runs[Maximal equal statement runs]
+  runs --> report
   shingles --> join[Exact prefix-filtered similarity join]
   exact --> verify[Byte equality verification]
   join --> jaccard[Jaccard verification]
@@ -35,7 +38,7 @@ Aposlop sorts data at stage boundaries so worker order never changes output.
 ## Syntax parsing
 
 Tree-sitter parses each supported file.
-Language-specific queries select function-like blocks, identifiers, literals, comments, and complexity decisions.
+Language-specific queries select function-like blocks, statement sequences, identifiers, literals, comments, and complexity decisions.
 
 A file can contain syntax errors without failing the complete command.
 Aposlop keeps valid blocks and reports one file diagnostic.
@@ -59,6 +62,19 @@ Positional filtering rejects candidate pairs that cannot accumulate enough remai
 
 Aposlop verifies every surviving candidate pair with exact Jaccard similarity.
 These filters preserve every threshold-qualified block pair.
+
+## Statement runs
+
+Aposlop hashes the normalized stream of each statement in a function body or control-flow body.
+It groups each statement position by the hash of its shortest run that reaches the smallest `min_nodes` value of the language.
+
+Aposlop extends each candidate pair forward while the normalized statements stay equal.
+It skips a pair when the preceding statements are also equal, because an earlier pair produces the longer run.
+Byte equality verifies every statement before Aposlop accepts a run relation.
+Aposlop rejects a run that repeats one shorter unit of statement hashes, because such runs are usually data-like code.
+
+Aposlop processes larger run relations first.
+It drops a run relation that matched blocks already describe or that a larger run relation overlaps.
 
 ## Duplicate grouping
 

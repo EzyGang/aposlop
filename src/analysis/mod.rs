@@ -2,6 +2,7 @@ mod query;
 mod tokenize;
 
 use std::fs;
+use std::ops::Range;
 use std::path::PathBuf;
 
 use rayon::prelude::*;
@@ -36,6 +37,22 @@ pub(crate) struct AnalyzedBlock {
     pub(crate) normalized_hash: u64,
     pub(crate) shingles: Vec<u64>,
     pub(crate) complexity: usize,
+    pub(crate) sequences: Vec<Vec<Statement>>,
+}
+
+/// One statement of a statement sequence whose innermost block is the owning block.
+///
+/// The `exact` and `normalized` ranges index the owning block streams.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub(crate) struct Statement {
+    pub(crate) start_byte: usize,
+    pub(crate) end_byte: usize,
+    pub(crate) start_line: usize,
+    pub(crate) end_line: usize,
+    pub(crate) named_node_count: usize,
+    pub(crate) exact: Range<usize>,
+    pub(crate) normalized: Range<usize>,
+    pub(crate) normalized_hash: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd, Serialize)]

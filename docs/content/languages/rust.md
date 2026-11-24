@@ -10,6 +10,11 @@ Aposlop analyzes `.rs` files.
 
 Aposlop reports free functions, methods, and closures as independent blocks.
 
+## Statement sequences
+
+Aposlop compares statement runs in every block expression inside a block.
+Block expressions include function bodies, closure bodies, and control-flow bodies.
+
 ## Type-2 normalization
 
 Aposlop anonymizes these Rust values:

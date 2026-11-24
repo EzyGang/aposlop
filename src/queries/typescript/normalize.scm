@@ -12,6 +12,12 @@
   value: (_) @block)
 
 [
+  (statement_block)
+  (switch_case)
+  (switch_default)
+] @sequence
+
+[
   (identifier)
   (private_property_identifier)
   (property_identifier)

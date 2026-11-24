@@ -20,6 +20,19 @@ Aposlop reports:
 Aposlop reports classes and their methods as independent blocks.
 Aposlop can also report nested valid blocks independently.
 
+## Statement sequences
+
+Aposlop compares statement runs in these bodies inside a block:
+
+- function bodies
+- `if`, `elif`, and `else` bodies
+- `for` and `while` bodies
+- `try`, `except`, and `finally` bodies
+- `with` bodies
+- `match` case bodies
+
+Class bodies do not supply statement runs.
+
 ## Type-2 normalization
 
 Aposlop anonymizes:

@@ -27,6 +27,7 @@ Use `**` to match across directory boundaries.
 | `type_2` | Boolean | `true` | Enables Type-2 report entries. |
 | `type_3` | Boolean | `true` | Enables Type-3 report entries. |
 | `type_3_threshold` | Number | `0.85` | Must be finite and within `0.0..=1.0`. |
+| `statement_runs` | Boolean | `true` | Enables Type-1 and Type-2 statement runs inside larger blocks. |
 
 ## `[metrics]`
 
@@ -64,6 +65,7 @@ Each language table accepts these optional fields:
 | `type_2` | Boolean |
 | `type_3` | Boolean |
 | `type_3_threshold` | Number within `0.0..=1.0` |
+| `statement_runs` | Boolean |
 | `calculate_complexity` | Boolean |
 | `complexity_threshold` | Positive integer |
 | `max_file_lines` | Positive integer |
@@ -88,6 +90,7 @@ type_1 = true
 type_2 = true
 type_3 = true
 type_3_threshold = 0.85
+statement_runs = true
 
 [metrics]
 calculate_complexity = true

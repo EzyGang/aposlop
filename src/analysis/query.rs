@@ -6,8 +6,9 @@ use tree_sitter::{Node, QueryCursor, StreamingIterator};
 use crate::language::CompiledLanguage;
 
 #[derive(Default)]
-pub(super) struct CaptureRanges {
+pub(super) struct CaptureRanges<'tree> {
     pub(super) blocks: Vec<Range<usize>>,
+    pub(super) sequences: Vec<Node<'tree>>,
     pub(super) ignored: Vec<Range<usize>>,
     pub(super) identifiers: Vec<Range<usize>>,
     pub(super) literals: Vec<Range<usize>>,
@@ -36,11 +37,11 @@ pub(super) fn block_nodes<'tree>(
     blocks
 }
 
-pub(super) fn capture_ranges(
+pub(super) fn capture_ranges<'tree>(
     provider: &CompiledLanguage,
-    block: Node<'_>,
+    block: Node<'tree>,
     source: &[u8],
-) -> CaptureRanges {
+) -> CaptureRanges<'tree> {
     let mut ranges = CaptureRanges::default();
     let mut cursor = QueryCursor::new();
     let mut matches = cursor.matches(&provider.normalization, block, source);
@@ -54,6 +55,7 @@ pub(super) fn capture_ranges(
                 "anonymize.identifier" => ranges.identifiers.push(range),
                 "anonymize.literal" => ranges.literals.push(range),
                 "block" => ranges.blocks.push(range),
+                "sequence" => ranges.sequences.push(capture.node),
                 _ => (),
             }
         }
@@ -66,7 +68,7 @@ pub(super) fn complexity(
     provider: &CompiledLanguage,
     block: Node<'_>,
     source: &[u8],
-    blocks: &[Range<usize>],
+    ranges: &CaptureRanges<'_>,
 ) -> usize {
     let block_range = block.byte_range();
     let mut captures = BTreeSet::new();
@@ -76,9 +78,7 @@ pub(super) fn complexity(
     while let Some(query_match) = matches.next() {
         for capture in query_match.captures {
             let range = capture.node.byte_range();
-            if blocks.iter().any(|nested| {
-                *nested != block_range && nested.start <= range.start && nested.end >= range.end
-            }) {
+            if ranges.is_in_nested_block(&block_range, &range) {
                 continue;
             }
             captures.insert((range.start, range.end));
@@ -104,4 +104,13 @@ pub(super) fn contains_invalid(root: Node<'_>) -> bool {
     }
 
     false
+}
+
+impl CaptureRanges<'_> {
+    /// Reports whether `range` belongs to a block nested inside `block`.
+    pub(super) fn is_in_nested_block(&self, block: &Range<usize>, range: &Range<usize>) -> bool {
+        self.blocks
+            .iter()
+            .any(|nested| nested != block && nested.start <= range.start && nested.end >= range.end)
+    }
 }

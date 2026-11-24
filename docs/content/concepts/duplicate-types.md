@@ -5,6 +5,7 @@ title: Duplicate types
 # Duplicate types
 
 Aposlop classifies block relations into three mutually exclusive duplicate types.
+It also finds Type-1 and Type-2 relations between statement runs inside larger blocks.
 It combines connected relations into one duplicate group with two or more source instances.
 
 ## Type-1
@@ -71,3 +72,31 @@ Two blocks do not match when either contains the other in the same file.
 
 Aposlop compares blocks only when they use the same language identity.
 TypeScript and TSX share one language identity and can match each other.
+
+## Statement runs
+
+A statement run is a sequence of adjacent statements in one function body or control-flow body.
+The language pages list the bodies that supply statements.
+
+A run relation connects two runs with equal normalized statements.
+It is Type-1 when the canonical streams are also equal, and Type-2 otherwise.
+Aposlop does not find Type-3 relations between statement runs.
+
+Aposlop extends each run relation to the longest equal run.
+For example, a copied loop inside two different functions produces one group with the two loops.
+
+Both runs must meet their effective `min_lines` and `min_nodes` values.
+Both runs must enable `statement_runs` and the applicable duplicate type.
+Two runs do not match when they overlap in the same file.
+
+Set `statement_runs = false` to disable run relations without changing block relations.
+Language and extension tables can override this value.
+
+Aposlop does not report a run relation in these conditions:
+
+- A matched block pair contains the two runs.
+- The two runs contain a matched block pair, and the remaining statements of a run have fewer than `min_nodes` named nodes.
+- A larger run relation overlaps both runs.
+- The run repeats one shorter unit of statements two or more times, such as a list of field assignments with the same shape.
+
+Run instances and block instances do not join the same group.

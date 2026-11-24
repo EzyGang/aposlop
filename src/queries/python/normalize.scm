@@ -14,6 +14,31 @@
   (lambda) @block
 ]
 
+[
+  (function_definition
+    body: (block) @sequence)
+  (if_statement
+    consequence: (block) @sequence)
+  (elif_clause
+    consequence: (block) @sequence)
+  (else_clause
+    body: (block) @sequence)
+  (for_statement
+    body: (block) @sequence)
+  (while_statement
+    body: (block) @sequence)
+  (try_statement
+    body: (block) @sequence)
+  (except_clause
+    (block) @sequence)
+  (finally_clause
+    (block) @sequence)
+  (with_statement
+    body: (block) @sequence)
+  (case_clause
+    consequence: (block) @sequence)
+]
+
 (identifier) @anonymize.identifier
 
 [

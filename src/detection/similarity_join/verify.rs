@@ -24,5 +24,5 @@ pub(super) fn verify_pair(
     }
 
     classified.insert(pair);
-    groups.add(pair, CloneKind::Type3, similarity);
+    groups.add(pair.0.0, pair.1.0, CloneKind::Type3, similarity);
 }

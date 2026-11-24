@@ -34,6 +34,7 @@ Each cached block contains this analysis data:
 - The cache stores the exact and normalized hashes.
 - The cache stores the sorted unique shingles.
 - The cache stores the complexity score.
+- The cache stores the statement sequences with their line spans, named-node counts, stream ranges, and normalized hashes.
 
 Aposlop does not cache eligibility thresholds or report records.
 Reporting configuration changes do not invalidate unchanged analysis.

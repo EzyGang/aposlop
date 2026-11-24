@@ -16,6 +16,11 @@ Aposlop reports:
 
 Nested function literals have independent duplicate and complexity results.
 
+## Statement sequences
+
+Aposlop compares statement runs in every statement list inside a block.
+Statement lists include function bodies, control-flow bodies, and `switch` and `select` cases.
+
 ## Type-2 normalization
 
 Aposlop anonymizes value, field, label, package, and type identifiers.

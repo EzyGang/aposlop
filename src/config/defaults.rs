@@ -20,6 +20,7 @@ impl Default for DuplicateConfig {
             type_2: true,
             type_3: true,
             type_3_threshold: 0.85,
+            statement_runs: true,
         }
     }
 }

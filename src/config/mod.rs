@@ -43,6 +43,7 @@ pub(crate) struct DuplicateConfig {
     pub(crate) type_2: bool,
     pub(crate) type_3: bool,
     pub(crate) type_3_threshold: f64,
+    pub(crate) statement_runs: bool,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize)]
@@ -68,6 +69,7 @@ pub(crate) struct RuleOverride {
     pub(crate) type_2: Option<bool>,
     pub(crate) type_3: Option<bool>,
     pub(crate) type_3_threshold: Option<f64>,
+    pub(crate) statement_runs: Option<bool>,
     pub(crate) calculate_complexity: Option<bool>,
     pub(crate) complexity_threshold: Option<usize>,
     pub(crate) max_file_lines: Option<usize>,
@@ -88,6 +90,7 @@ pub(crate) struct EffectiveRules {
     pub(crate) type_2: bool,
     pub(crate) type_3: bool,
     pub(crate) type_3_threshold: f64,
+    pub(crate) statement_runs: bool,
     pub(crate) calculate_complexity: bool,
     pub(crate) complexity_threshold: usize,
     pub(crate) max_file_lines: usize,
@@ -167,6 +170,7 @@ impl Config {
             type_2: self.duplicates.type_2,
             type_3: self.duplicates.type_3,
             type_3_threshold: self.duplicates.type_3_threshold,
+            statement_runs: self.duplicates.statement_runs,
             calculate_complexity: self.metrics.calculate_complexity,
             complexity_threshold: self.metrics.complexity_threshold,
             max_file_lines: self.file_length.max_lines,
@@ -212,6 +216,7 @@ impl Config {
             type_2: Some(file.duplicates_detection.type_2),
             type_3: Some(file.duplicates_detection.type_3),
             type_3_threshold: Some(file.duplicates_detection.type_3_threshold),
+            statement_runs: Some(file.duplicates_detection.statement_runs),
             calculate_complexity: Some(file.metrics.calculate_complexity),
             complexity_threshold: Some(file.metrics.complexity_threshold),
             max_file_lines: Some(file.file_length.max_lines),
@@ -252,6 +257,7 @@ impl RuleOverride {
         apply!(type_2);
         apply!(type_3);
         apply!(type_3_threshold);
+        apply!(statement_runs);
         apply!(calculate_complexity);
         apply!(complexity_threshold);
         apply!(max_file_lines);

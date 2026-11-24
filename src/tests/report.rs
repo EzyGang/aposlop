@@ -420,6 +420,7 @@ fn analyzed_file(path: &str, scores: &[usize]) -> AnalyzedFile {
                 normalized_hash: index as u64,
                 shingles: vec![index as u64],
                 complexity: *score,
+                sequences: Vec::new(),
             })
             .collect(),
         diagnostics: Vec::new(),

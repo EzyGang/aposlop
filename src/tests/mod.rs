@@ -3,6 +3,7 @@ mod cache;
 mod config;
 mod configuration;
 mod detection;
+mod fragments;
 mod ingest;
 mod language;
 mod language_features;

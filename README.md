@@ -229,6 +229,13 @@ Analyze the current directory:
 aposlop .
 ```
 
+Run the same analysis without a global installation:
+
+```bash
+uvx aposlop .
+cargo run -- .
+```
+
 Show the source for each duplicate:
 
 ```bash
@@ -268,6 +275,9 @@ Aposlop classifies block relations in this order:
 Aposlop reports each connected set of duplicate relations as one group.
 Two blocks do not match when either contains the other in the same file.
 A TypeScript block can match a TSX block.
+
+Aposlop also finds Type-1 and Type-2 statement runs that a developer copied into larger functions.
+A run must meet the same line and named-node limits as a block.
 
 [Read the duplicate model](https://aposlop.ezygang.digital/concepts/duplicate-types/).
 

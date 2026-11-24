@@ -24,6 +24,12 @@ Aposlop reports:
 - Aposlop reports class static blocks.
 - Aposlop reports class field initializer expressions.
 
+## Statement sequences
+
+Aposlop compares statement runs in every statement block inside a block.
+It also compares statement runs in `switch` cases and `switch` default clauses.
+Class bodies do not supply statement runs.
+
 ## Type-2 normalization
 
 Aposlop anonymizes value, property, private-property, shorthand, binding, label, and type identifiers.
