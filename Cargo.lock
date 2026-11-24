@@ -69,7 +69,7 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "aposlop"
-version = "1.3.0"
+version = "1.3.1"
 dependencies = [
  "anyhow",
  "bincode",
@@ -87,7 +87,7 @@ dependencies = [
  "tree-sitter-go",
  "tree-sitter-python",
  "tree-sitter-rust",
- "tree-sitter-typescript",
+ "tree-sitter-typescript-next",
  "xxhash-rust",
 ]
 
@@ -993,10 +993,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "tree-sitter-typescript"
-version = "0.23.2"
+name = "tree-sitter-typescript-next"
+version = "0.25.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c5f76ed8d947a75cc446d5fccd8b602ebf0cde64ccf2ffa434d873d7a575eff"
+checksum = "c5647365c901d0474decf25bd369535fc13e686a2df665880f33092620120805"
 dependencies = [
  "cc",
  "tree-sitter-language",

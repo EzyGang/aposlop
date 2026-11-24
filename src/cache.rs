@@ -10,20 +10,23 @@ use thiserror::Error;
 use crate::analysis::AnalyzedFile;
 use crate::ingest::SourceFile;
 
-pub(crate) const CACHE_FORMAT_VERSION: u32 = 2;
-pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 7;
+pub(crate) const CACHE_FORMAT_VERSION: u32 = 3;
+pub(crate) const ANALYSIS_SCHEMA_VERSION: u32 = 8;
 const CACHE_NAME: &str = ".aposlop_cache";
 
-#[derive(Debug, Deserialize, Serialize)]
-pub(crate) struct CacheFile {
+/// The versions that select the entry layout.
+///
+/// Aposlop decodes the header before the entries, because entries of another version can have another layout.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub(crate) struct CacheHeader {
     pub(crate) format_version: u32,
-    pub(crate) entries: Vec<CacheEntry>,
+    pub(crate) analysis_schema_version: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub(crate) struct CacheEntry {
-    pub(crate) analysis_schema_version: u32,
-    pub(crate) analyzed: AnalyzedFile,
+pub(crate) struct CacheFile {
+    pub(crate) header: CacheHeader,
+    pub(crate) entries: Vec<AnalyzedFile>,
 }
 
 #[derive(Debug)]
@@ -65,14 +68,8 @@ pub(crate) enum CacheError {
 
 #[derive(Serialize)]
 struct CacheFileRef<'a> {
-    format_version: u32,
-    entries: Vec<CacheEntryRef<'a>>,
-}
-
-#[derive(Serialize)]
-struct CacheEntryRef<'a> {
-    analysis_schema_version: u32,
-    analyzed: &'a AnalyzedFile,
+    header: CacheHeader,
+    entries: Vec<&'a AnalyzedFile>,
 }
 
 #[must_use]
@@ -94,6 +91,13 @@ pub(crate) fn resolve(root: &Path, enabled: bool, files: Vec<SourceFile>) -> Cac
             return cold(files, vec![diagnostic(error.to_string())]);
         }
     };
+    let header =
+        bincode::serde::decode_from_slice::<CacheHeader, _>(&bytes, bincode::config::standard());
+    match header {
+        Ok((header, _)) if header == CacheHeader::CURRENT => (),
+        Ok(_) => return cold(files, Vec::new()),
+        Err(error) => return cold(files, vec![diagnostic(error.to_string())]),
+    }
     let decoded =
         bincode::serde::decode_from_slice::<CacheFile, _>(&bytes, bincode::config::standard());
     let (cache, used) = match decoded {
@@ -106,23 +110,19 @@ pub(crate) fn resolve(root: &Path, enabled: bool, files: Vec<SourceFile>) -> Cac
             vec![diagnostic("cache contains trailing bytes".to_owned())],
         );
     }
-    if cache.format_version != CACHE_FORMAT_VERSION {
-        return cold(files, Vec::new());
-    }
     let mut entries: BTreeMap<_, _> = cache
         .entries
         .into_iter()
-        .map(|entry| (entry.analyzed.identity.path.clone(), entry))
+        .map(|analyzed| (analyzed.identity.path.clone(), analyzed))
         .collect();
     let mut hits = Vec::new();
     let mut misses = Vec::new();
     for source in files {
-        let hit = entries.remove(&source.identity.path).filter(|entry| {
-            entry.analysis_schema_version == ANALYSIS_SCHEMA_VERSION
-                && entry.analyzed.identity == source.identity
-        });
+        let hit = entries
+            .remove(&source.identity.path)
+            .filter(|analyzed| analyzed.identity == source.identity);
         match hit {
-            Some(entry) => hits.push(entry.analyzed),
+            Some(analyzed) => hits.push(analyzed),
             None => misses.push(source),
         }
     }
@@ -140,14 +140,8 @@ pub(crate) fn write(root: &Path, enabled: bool, files: &[AnalyzedFile]) -> Resul
     let mut sorted: Vec<_> = files.iter().collect();
     sorted.sort_unstable_by(|left, right| left.identity.path.cmp(&right.identity.path));
     let cache = CacheFileRef {
-        format_version: CACHE_FORMAT_VERSION,
-        entries: sorted
-            .into_iter()
-            .map(|analyzed| CacheEntryRef {
-                analysis_schema_version: ANALYSIS_SCHEMA_VERSION,
-                analyzed,
-            })
-            .collect(),
+        header: CacheHeader::CURRENT,
+        entries: sorted,
     };
     let bytes = bincode::serde::encode_to_vec(&cache, bincode::config::standard())?;
     let path = root.join(CACHE_NAME);
@@ -169,6 +163,13 @@ pub(crate) fn write(root: &Path, enabled: bool, files: &[AnalyzedFile]) -> Resul
             source: error.error,
         })?;
     Ok(())
+}
+
+impl CacheHeader {
+    const CURRENT: Self = Self {
+        format_version: CACHE_FORMAT_VERSION,
+        analysis_schema_version: ANALYSIS_SCHEMA_VERSION,
+    };
 }
 
 fn cold(files: Vec<SourceFile>, diagnostics: Vec<CacheDiagnostic>) -> CacheResolution {

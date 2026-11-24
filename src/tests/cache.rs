@@ -5,7 +5,7 @@ use tempfile::TempDir;
 
 use crate::analysis::AnalyzedFile;
 use crate::cache::{
-    ANALYSIS_SCHEMA_VERSION, CACHE_FORMAT_VERSION, CacheEntry, CacheFile, resolve, write,
+    ANALYSIS_SCHEMA_VERSION, CACHE_FORMAT_VERSION, CacheFile, CacheHeader, resolve, write,
 };
 use crate::ingest::{FileIdentity, SourceFile};
 use crate::language::LanguageId;
@@ -52,7 +52,7 @@ fn equal_identity_hits_and_changed_identity_misses() -> TestResult {
 }
 
 #[test]
-fn missing_incompatible_and_stale_entries_miss() -> TestResult {
+fn missing_and_incompatible_caches_miss() -> TestResult {
     let fixture = TempDir::new()?;
     let source = source("code.rs", LanguageId::Rust);
     assert_eq!(
@@ -62,28 +62,42 @@ fn missing_incompatible_and_stale_entries_miss() -> TestResult {
         1
     );
 
-    encode(
-        &fixture,
-        CacheFile {
+    for header in [
+        CacheHeader {
             format_version: CACHE_FORMAT_VERSION + 1,
-            entries: vec![entry(&source, ANALYSIS_SCHEMA_VERSION)],
+            analysis_schema_version: ANALYSIS_SCHEMA_VERSION,
         },
-    )?;
-    assert_eq!(
-        resolve(fixture.path(), true, vec![source.clone()])
-            .misses
-            .len(),
-        1
-    );
-
-    encode(
-        &fixture,
-        CacheFile {
+        CacheHeader {
             format_version: CACHE_FORMAT_VERSION,
-            entries: vec![entry(&source, ANALYSIS_SCHEMA_VERSION + 1)],
+            analysis_schema_version: ANALYSIS_SCHEMA_VERSION + 1,
         },
-    )?;
-    assert_eq!(resolve(fixture.path(), true, vec![source]).misses.len(), 1);
+    ] {
+        encode(
+            &fixture,
+            CacheFile {
+                header,
+                entries: vec![analyzed(&source)],
+            },
+        )?;
+        let resolution = resolve(fixture.path(), true, vec![source.clone()]);
+        assert_eq!(resolution.misses.len(), 1);
+        assert!(resolution.diagnostics.is_empty());
+    }
+    Ok(())
+}
+
+#[test]
+fn other_format_versions_miss_before_their_entries_decode() -> TestResult {
+    let fixture = TempDir::new()?;
+    let source = source("code.rs", LanguageId::Rust);
+    let older_format = u8::try_from(CACHE_FORMAT_VERSION)? - 1;
+    let mut bytes = vec![older_format, 1, 1, 0xFD];
+    bytes.extend_from_slice(&[0xFF; 8]);
+    fs::write(fixture.path().join(".aposlop_cache"), bytes)?;
+
+    let resolution = resolve(fixture.path(), true, vec![source]);
+    assert_eq!(resolution.misses.len(), 1);
+    assert!(resolution.diagnostics.is_empty());
     Ok(())
 }
 
@@ -91,7 +105,11 @@ fn missing_incompatible_and_stale_entries_miss() -> TestResult {
 fn corrupt_cache_is_diagnostic_and_is_replaced() -> TestResult {
     let fixture = TempDir::new()?;
     let source = source("code.rs", LanguageId::Rust);
-    fs::write(fixture.path().join(".aposlop_cache"), b"not bincode")?;
+    let path = fixture.path().join(".aposlop_cache");
+    write(fixture.path(), true, &[analyzed(&source)])?;
+    let mut bytes = fs::read(&path)?;
+    bytes.truncate(bytes.len() - 1);
+    fs::write(&path, bytes)?;
 
     let resolution = resolve(fixture.path(), true, vec![source.clone()]);
     assert_eq!(resolution.diagnostics.len(), 1);
@@ -168,13 +186,6 @@ fn analyzed(source: &SourceFile) -> AnalyzedFile {
         line_count: 1,
         blocks: Vec::new(),
         diagnostics: Vec::new(),
-    }
-}
-
-fn entry(source: &SourceFile, schema: u32) -> CacheEntry {
-    CacheEntry {
-        analysis_schema_version: schema,
-        analyzed: analyzed(source),
     }
 }
 

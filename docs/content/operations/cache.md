@@ -16,8 +16,8 @@ A cache hit requires these equal values:
 - The modification time seconds must match.
 - The modification time nanoseconds must match.
 - The language identity must match.
-- The cache format version must match.
-- The analysis schema version must match.
+
+The cache file starts with a header that holds the cache format version and the analysis schema version.
 
 A missing or stale entry becomes a cache miss.
 Aposlop omits unmatched old entries from the next cache file.
@@ -41,7 +41,7 @@ Reporting configuration changes do not invalidate unchanged analysis.
 
 ## Corruption recovery
 
-Aposlop treats an incompatible or corrupt cache as an empty cache.
+Aposlop treats a corrupt cache as an empty cache.
 Aposlop emits one cache diagnostic and analyzes supported files normally.
 Aposlop replaces the cache after analysis and report output succeed.
 
