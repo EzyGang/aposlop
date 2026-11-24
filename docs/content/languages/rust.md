@@ -1,3 +1,7 @@
+---
+title: Rust support
+---
+
 # Rust support
 
 Aposlop analyzes `.rs` files.

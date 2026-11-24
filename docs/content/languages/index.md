@@ -1,3 +1,7 @@
+---
+title: Supported languages
+---
+
 # Supported languages
 
 Aposlop analyzes five source-file extensions.

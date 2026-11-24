@@ -1,6 +1,6 @@
 ---
 name: aposlop
-description: Configure and use Aposlop to find duplicated code, excessive file length, and cyclomatic complexity in Go, Rust, Python, TypeScript, and TSX repositories. Use this skill whenever a user asks to detect code duplication, code clones, repeated agent-generated logic, code slop, oversized source files, or excessive complexity. Also use it when adding Aposlop to a repository, agent validation workflow, or CI process, and when investigating or resolving Aposlop findings.
+description: Use Aposlop to find duplicate code, large files, and high complexity in Go, Rust, Python, TypeScript, and TSX projects. Use this skill for Aposlop installation, agent skill installation, configuration, scans, CI setup, findings, or cleanup.
 ---
 
 # Aposlop
@@ -29,6 +29,28 @@ Read [the installation guide](https://aposlop.ezygang.digital/getting-started/in
 
 The examples below use `aposlop`.
 Replace it with `uvx aposlop` when using the temporary installation.
+
+## Install agent skills
+
+Use the installed CLI:
+
+```bash
+aposlop install-skills
+```
+
+The command uses `npx` when available.
+It uses `pnpm dlx` when `npx` is unavailable.
+
+Without the CLI, run either command directly:
+
+```bash
+npx skills@latest add EzyGang/aposlop
+pnpm dlx skills@latest add EzyGang/aposlop
+```
+
+The installer lets the user choose skills and target agents.
+The skills do not install the Aposlop CLI.
+Read the [agent skills guide](https://aposlop.ezygang.digital/skills/) for each skill.
 
 ## Analyze a repository
 

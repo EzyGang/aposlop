@@ -1,3 +1,7 @@
+---
+title: Cache operations
+---
+
 # Cache operations
 
 Aposlop stores analyzed file data in `<target-directory>/.aposlop_cache` when the user enables caching.

@@ -1,3 +1,7 @@
+---
+title: JSON report reference
+---
+
 # JSON report reference
 
 Select JSON with `--format json`.

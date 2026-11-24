@@ -46,6 +46,7 @@ Aposlop uses Tree-sitter to parse each supported language.
 ## Table of Contents
 
 - [Why Aposlop?](#why-aposlop)
+  - [Skills for coding agents](#skills-for-coding-agents)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Core Features](#core-features)
@@ -64,57 +65,54 @@ Aposlop uses Tree-sitter to parse each supported language.
 
 ## Why Aposlop?
 
-Aposlop exists to find code slop from coding agents.
+Coding agents can add repeated logic, complex control flow, and large files faster than reviewers can find them.
+Aposlop gives people and agents one fast check for these problems.
 
-Coding agents can generate duplicate code, complex control flow, and oversized source files.
-These changes can enter a project faster than a reviewer can find them.
+**Built for agent-written code.**
+Aposlop finds copies even after names or values change.
 
-Text comparison does not find a duplicate after an agent renames identifiers or changes literals.
-A linter does not find repeated logic in different files or languages.
-A complexity limit does not identify repeated logic or growing file responsibilities.
+**Clear limits.**
+Set rules for duplicate code, complexity, and file length.
 
-Aposlop uses exact, normalized, and verified near-miss duplicate detection.
-It calculates cyclomatic complexity for each code block.
-It also reports supported source files that exceed their configured line limit.
+**Useful results.**
+Read source findings in the terminal or use stable JSON in other tools.
 
-Aposlop is fast enough for an agent validation loop.
-You can configure thresholds for each language and file extension.
-You can exclude paths or accept duplicate and complexity findings.
-These controls let a project accept known findings and continue development.
+**Fast feedback.**
+Parallel analysis and a local cache keep repeat checks short.
 
-| Feature             | Result                                                  |
-| ------------------- | ------------------------------------------------------- |
-| Type-1 detection    | Finds exact duplicates                                  |
-| Type-2 detection    | Finds duplicates after identifier or literal changes    |
-| Type-3 detection    | Finds verified near-miss duplicates                     |
-| Complexity analysis | Calculates complexity for each code block               |
-| File-length check   | Reports supported files above their effective limit      |
-| Terminal code view  | Shows every group instance with line numbers            |
-| JSON output         | Provides stable data for other tools                    |
-| CI command          | Returns failure when findings remain                    |
-| Local cache         | Reuses analysis for unchanged files                     |
-| Update check        | Warns interactive users when a new release is available |
+| Need | Why it matters | How Aposlop helps |
+| --- | --- | --- |
+| Find copied logic | Renamed values can hide a copy from text search | Tree-sitter finds exact, changed, and near-match copies |
+| Keep code clear | Deep control flow is hard to review and change | Language rules measure complexity for each code block |
+| Keep files focused | Large files can collect unrelated work | File limits can vary by language and extension |
+| Check every change | Slow checks are easy to skip | Native code, parallel work, and caching reduce wait time |
+| Support automation | Agents and CI need stable results | JSON output, fixed ordering, and `aposlop ci` support repeat checks |
 
-<details>
-<summary><strong>How Aposlop works</strong></summary>
+### Skills for coding agents
 
-- **Parse once.** Tree-sitter providers extract blocks, identifiers, literals, comments, and complexity decisions.
-- **Type-1.** XXH3 groups exact token streams before complete equality verification.
-- **Type-2.** The same process compares streams with normalized identifiers and literals.
-- **Type-3.** Five-token shingles feed a prefix-filtered similarity join.
-  Length and position filters prune candidates before Jaccard verification.
-- **Grouping.** Connected duplicate relations become one deterministic group with every source instance.
-- **Complexity.** Each block starts at `1` and adds unique language-specific decision captures.
-  Nested blocks have independent scores.
-- **File length.** Each supported file keeps one physical line count for threshold reporting.
-- **Cache.** Versioned bincode data reuses unchanged analysis.
-  File metadata and schema versions invalidate stale entries before atomic replacement.
+Bundled skills help agents use Aposlop and make smaller code and test changes.
+Install them separately from the CLI.
 
-</details>
+| Skill | Use it for | How to use it |
+| --- | --- | --- |
+| [`aposlop`](https://aposlop.ezygang.digital/skills/aposlop/) | Install, configure, run, and read Aposlop | Ask the agent to scan or set up a project |
+| [`aposlop-code-changes`](https://aposlop.ezygang.digital/skills/code-changes/) | Make the smallest complete code change | It starts automatically for code changes |
+| [`aposlop-test-changes`](https://aposlop.ezygang.digital/skills/test-changes/) | Add a few tests that protect behavior | It starts automatically for test work |
+| [`aposlop-deslop-tests`](https://aposlop.ezygang.digital/skills/deslop-tests/) | Remove tests without a distinct purpose | Run `/aposlop-deslop-tests [scope]` |
+| [`aposlop-deslop-turbo`](https://aposlop.ezygang.digital/skills/deslop-turbo/) | Reduce tests and production code without behavior changes | Run `/aposlop-deslop-turbo [scope]` |
+
+Read the [agent skills guide](https://aposlop.ezygang.digital/skills/) for installation and examples.
 
 ---
 
 ## Installation
+
+Aposlop has two components:
+
+1. The CLI scans source code and reports findings.
+2. Agent skills guide coding agents during setup, coding, testing, and cleanup.
+
+Install either component or both.
 
 ### Install script on Linux or macOS
 
@@ -188,30 +186,25 @@ aposlop --help
 
 ### Agent skills
 
-Discover and install the bundled agent skills with npm:
+Use the installed CLI:
+
+```bash
+aposlop install-skills
+```
+
+The command uses `npx` when available.
+It uses `pnpm dlx` when `npx` is unavailable.
+
+You can also run either installer directly:
 
 ```bash
 npx skills@latest add EzyGang/aposlop
-```
-
-Or use pnpm:
-
-```bash
 pnpm dlx skills@latest add EzyGang/aposlop
 ```
 
-The installer lists every bundled skill and lets you select the skills and target agents.
-
-The `aposlop` skill teaches agents to configure Aposlop, inspect findings, and add Aposlop to validation workflows.
-The `aposlop-code-changes` skill helps agents desplop code through small, reuse-first changes that fix shared root causes.
-The `aposlop-deslop-tests` skill removes low-value tests and then simplifies production seams that only those tests required.
-The `aposlop-deslop-turbo` skill completes test deslop first, then minimizes applicable production logic without changing behavior.
-
-The first two skills can activate automatically from the request context.
-The two deslop skills declare manual-only activation.
-Invoke `/aposlop-deslop-tests` or `/aposlop-deslop-turbo` manually when the agent supports slash commands.
-For other agents, select the named deslop skill through their skill interface.
-The skills do not install the Aposlop binary.
+The installer lets you choose the skills and target agents.
+The skills do not install the Aposlop CLI.
+Read the [agent skills guide](https://aposlop.ezygang.digital/skills/) for each skill.
 
 ### Update checks
 

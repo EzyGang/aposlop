@@ -13,6 +13,7 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 - [Languages](languages/index.md) describes supported files and analysis behavior.
 - [Output formats](operations/output.md) describes terminal and JSON reports.
 - [CLI reference](reference/cli.md) describes every command-line option.
+- [Agent skills](skills/index.md) explains the bundled guides for coding agents.
 - [Under the hood](concepts/how-it-works.md) explains Tree-sitter, exact similarity joins, and Jaccard verification.
 
 ## Supported analysis
@@ -29,3 +30,11 @@ Aposlop reports connected Type-1, Type-2, and Type-3 duplicate groups without un
 
 Aposlop reports findings with exit code `0`.
 Operational and configuration failures return a non-zero exit code.
+
+## About this site
+
+Each page of this site loads a small script from `blog.ezygang.digital`, a [Cuhlumn](https://cuhlumn.ezygang.digital/platform/analytics/) server that the Aposlop maintainers operate.
+The server counts page views, clicks on outbound links, and clicks on download links.
+It counts daily visitors with a hash that changes every day.
+It stores the host name of the referring site, the device class, and the browser family.
+The script sets no cookies and stores nothing in the browser, and the server never stores IP addresses.
