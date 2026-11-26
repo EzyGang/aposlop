@@ -1,6 +1,6 @@
 ---
 name: aposlop
-description: Use Aposlop to find duplicate code, large files, and high complexity in Go, Rust, Python, TypeScript, and TSX projects. Use this skill for Aposlop installation, agent skill installation, configuration, scans, CI setup, findings, or cleanup.
+description: Run Aposlop to find duplicate code, oversized files and high cyclomatic complexity in Go, Rust, Python, TypeScript and TSX. Use it before finishing any code change in a repository that has an .aposlop.toml file or an aposlop binary, to check that the change added no copy of existing code and no new complexity finding. Also use it for Aposlop installation, agent skill installation, configuration, scans, CI setup, findings and cleanup.
 ---
 
 # Aposlop

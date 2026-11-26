@@ -1,6 +1,6 @@
 ---
 name: aposlop-code-changes
-description: Make minimal, reuse-first code changes after tracing the real behavior. Use this skill automatically for every implementation, bug fix, refactor, maintenance change, or Aposlop finding resolution. Use it even when the user does not name the skill.
+description: Checklist for any change to source code, read before the first edit. Use it when fixing a bug, implementing an issue, ticket or feature request, adding a flag, option, setting or API, refactoring, or resolving an Aposlop finding, even when the change looks small and the user doesn't name the skill. It keeps the change to the smallest complete diff. Check whether existing behavior already covers the request, reuse the helper, API or pattern the repository already has instead of writing a second implementation, fix a defect once in the shared function that owns it, and leave one focused runnable check.
 ---
 
 # Aposlop minimal code changes
