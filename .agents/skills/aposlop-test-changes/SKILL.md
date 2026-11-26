@@ -1,6 +1,6 @@
 ---
 name: aposlop-test-changes
-description: Write small, clear tests that protect behavior without duplicate cases or coverage padding. Use automatically for unit, regression, or integration tests, including tests needed for implementation and bug fixes.
+description: Checklist for adding or changing tests, read before writing the first test. Use it for a regression test after a bug fix, tests for a new feature, flag or option, and any unit or integration test a change needs, including when the user only says to add tests or to run the relevant tests as part of a code change. It keeps the test set to the fewest tests that protect visible behavior, with no duplicate cases or coverage padding, checked through public entry points.
 ---
 
 # Aposlop test changes
